@@ -25,19 +25,19 @@
 require(visNetwork)
 require(igraph)
 
-edges <- read.csv("/Users/harm/Desktop/EventGraphs/edges.csv", head=T)
+edges <- read.csv("/Users/harm/Desktop/EventGraphs/edges.csv", head = TRUE)
 edges$from <- as.character(edges$from)
 edges$to   <- as.character(edges$to)
 
-nodes = data.frame(id=unique(c(edges$from, edges$to)))
-nodes$label = nodes$id
+nodes <- data.frame(id = unique(c(edges$from, edges$to)))
+nodes$label <- nodes$id
 
 ## betweenness centrality
-ig = graph_from_data_frame(edges, directed=F)
-nodes$value = betweenness(ig)
+ig <- graph_from_data_frame(edges, directed = FALSE)
+nodes$value <- betweenness(ig)
 
-## communitty clustering
+## community clustering
 clusters <- cluster_edge_betweenness(ig)
-nodes$group = clusters$membership
+nodes$group <- clusters$membership
 
-print(visNetwork(nodes, edges,width="100%", height="2000") %>% visEdges(arrows = 'to', scaling = list(min = 2, max = 2)))
+print(visNetwork(nodes, edges, width = "100%", height = "2000") %>% visEdges(arrows = 'to', scaling = list(min = 2, max = 2)))

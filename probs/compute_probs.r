@@ -59,16 +59,16 @@ for (e in names(df.obs)) {
 # compute priors
 cat("Computing prior probabilities ...\n", file = stderr())
 df.prior <- data.frame(
-        Type = rep("prior", 2 * n.events),
-        Item = rep(NA, 2 * n.events),
-        Pr_original = rep(NA, 2 * n.events),
-        Pr_reduced  = rep(NA, 2 * n.events))
+        Type         = rep("prior", 2 * n.events),
+        Item         = rep(NA, 2 * n.events),
+        Pr_unreduced = rep(NA, 2 * n.events),
+        Pr_reduced   = rep(NA, 2 * n.events))
 n <- 0
 for (e in names(df.obs)) {
         n <- n + 1
-        df.prior[n,]$Item = e
-        df.prior[n,]$Pr_original = (1 / nrow(df.obs)) * sum(df.obs[,e])
-        df.prior[n,]$Pr_reduced  = (1 / nrow(df.vec)) * sum(df.vec[,e])
+        df.prior[n,]$Item         <- e
+        df.prior[n,]$Pr_unreduced <- (1 / nrow(df.obs)) * sum(df.obs[,e])
+        df.prior[n,]$Pr_reduced   <- (1 / nrow(df.vec)) * sum(df.vec[,e])
 }
 
 # convert prior data frame to table
@@ -78,10 +78,10 @@ setkey(tbl.prior, Item)
 # compute conjunction probabilities
 cat("Computing conjunction probabilities ...\n", file = stderr())
 df.conj <- data.frame(
-        Type = rep("conj", 2 * n.events * n.events),
-        Item = rep(NA, 2 * n.events * n.events),
-        Pr_original = rep(NA, 2 * n.events * n.events),
-        Pr_reduced  = rep(NA, 2 * n.events * n.events))
+        Type         = rep("conj", 2 * n.events * n.events),
+        Item         = rep(NA, 2 * n.events * n.events),
+        Pr_unreduced = rep(NA, 2 * n.events * n.events),
+        Pr_reduced   = rep(NA, 2 * n.events * n.events))
 n <- 0
 for (e2 in names(df.obs)) {
         for (e1 in names(df.obs)) {
@@ -92,11 +92,11 @@ for (e2 in names(df.obs)) {
                 cat(paste(n, ":", e1, "^", e2, "\n"))
                 df.conj[n,]$Item <- paste(e1, "^", e2, sep = "")
                 if (all(e1 == e2)) {
-                        df.conj[n,]$Pr_original <- tbl.prior[e1,]$Pr_original
-                        df.conj[n,]$Pr_reduced  <- tbl.prior[e1,]$Pr_reduced
+                        df.conj[n,]$Pr_unreduced <- tbl.prior[e1,]$Pr_unreduced
+                        df.conj[n,]$Pr_reduced   <- tbl.prior[e1,]$Pr_reduced
                 } else {
-                        df.conj[n,]$Pr_original <- (1 / nrow(df.obs)) * sum(df.obs[,e1] * df.obs[,e2])
-                        df.conj[n,]$Pr_reduced  <- (1 / nrow(df.vec)) * sum(df.vec[,e1] * df.vec[,e2])
+                        df.conj[n,]$Pr_unreduced <- (1 / nrow(df.obs)) * sum(df.obs[,e1] * df.obs[,e2])
+                        df.conj[n,]$Pr_reduced   <- (1 / nrow(df.vec)) * sum(df.vec[,e1] * df.vec[,e2])
                 }
         }
 }
@@ -108,14 +108,14 @@ setkey(tbl.conj, Item)
 # compute conditional probabilities
 cat("Computing conditional probabilities ...\n", file = stderr())
 df.cond <- data.frame(
-        Type = rep("cond", 2 * n.events * n.events),
-        Item = rep(NA, 2 * n.events * n.events),
-        Pr_original = rep(0, 2 * n.events * n.events),
-        Pr_reduced  = rep(0, 2 * n.events * n.events))
+        Type         = rep("cond", 2 * n.events * n.events),
+        Item         = rep(NA, 2 * n.events * n.events),
+        Pr_unreduced = rep(0, 2 * n.events * n.events),
+        Pr_reduced   = rep(0, 2 * n.events * n.events))
 n <- 0
 for (e2 in names(df.obs)) {
-        prior_original <- tbl.prior[e2,]$Pr_original
-        prior_reduced  <- tbl.prior[e2,]$Pr_reduced
+        prior_unreduced <- tbl.prior[e2,]$Pr_unreduced
+        prior_reduced   <- tbl.prior[e2,]$Pr_reduced
         for (e1 in names(df.obs)) {
                 # skip negated events as first argument
                 if (all(substr(e1, 1, 4) == "not("))
@@ -124,10 +124,10 @@ for (e2 in names(df.obs)) {
                 cat(paste(n, ":", e1, "|", e2, "\n"))                
                 conj <- paste(e1, "^", e2, sep = "")
                 df.cond[n,]$Item <- paste(e1, "|", e2, sep = "")
-                if (prior_original > 0)
-                        df.cond[n,]$Pr_original <- tbl.conj[conj,]$Pr_original / prior_original
+                if (prior_unreduced > 0)
+                        df.cond[n,]$Pr_unreduced <- tbl.conj[conj,]$Pr_unreduced / prior_unreduced
                 if (prior_reduced > 0)
-                        df.cond[n,]$Pr_reduced  <- tbl.conj[conj,]$Pr_reduced  / prior_reduced
+                        df.cond[n,]$Pr_reduced   <- tbl.conj[conj,]$Pr_reduced   / prior_reduced
         }
 }
 

@@ -33,9 +33,9 @@
 write_surprisal_values(N,File) :-
         ngrams(N,train,Ngrams),
         findall((Set,Sen,Sem,Surprisal),(
-          sentence(Set,Sem,Sen,[]),
-          Set \= train,
-          surprisal(Sen,Ngrams,Surprisal)),Quads),
+                sentence(Set,Sem,Sen,[]),
+                Set \= train,
+                surprisal(Sen,Ngrams,Surprisal)),Quads),
         open(File,write,Stream),
         format(Stream,'Cond,Sen,Sem,N,Surprisal~n',[]),
         write_surprisal_values_(Quads,N,Stream),

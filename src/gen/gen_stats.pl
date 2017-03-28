@@ -68,7 +68,7 @@ gen_structure_stats(Set) :-
         setof(Struct,Sem^Sen^structure(Set,Struct,Sem,Sen,[]),Structs),
         gen_structure_stats_(Structs,Set,Counts),
         foreach(member((Struct,ExSen,ExSem,NumTokens,NumTypes),Counts),
-          format('~a: ~t ~a ~t ~d ~t (~d) ~t ~w ~t ~w~n',[Set,Struct,NumTokens,NumTypes,ExSen,ExSem])),
+                format('~a: ~t ~a ~t ~d ~t (~d) ~t ~w ~t ~w~n',[Set,Struct,NumTokens,NumTypes,ExSen,ExSem])),
         findall(Sen,sentence(Set,_,Sen,[]),Sens), %% <-- sanity check
         length(Sens,NumSens),
         format('~nTotal: ~d~n',[NumSens]).
@@ -89,19 +89,19 @@ gen_structure_stats_([Struct|Structs],Set,[(Struct,ExSen,ExSem,NumTokens,NumType
 % gen_dss_vectors_stats(+Set,+SamplesFile)
 
 gen_dss_vector_stats(Set,SamplesFile) :-
-        dss_model:read_vectors(SamplesFile,StateMatrix),
+        dss_read_vectors(SamplesFile,StateMatrix),
         findall((Sen,Sem,Hash,Lawful),(
-          sentence(Set,Sem,Sen,[]),
-          dss_semantics:dss_semantics_vector(Sem,StateMatrix,Vec),
-          unit_vector_to_code_vector(Vec,CodeVec),
-          %md5_hash(CodeVec,Hash,[]),
-          sha_hash(CodeVec,Hash,[algorithm(sha256)]),
-          %sha_hash(CodeVec,Hash,[algorithm(sha512)]),
-          (  dss_semantics:dss_lawful_vector(Vec)
-          -> write('V '), Lawful = true
-          ;  write('X '), Lawful = false
-          ),
-          write(Sen),write(' => '),write(Hash),nl),Quads),
+                sentence(Set,Sem,Sen,[]),
+                dss_semantics:dss_semantics_vector(Sem,StateMatrix,Vec),
+                unit_vector_to_code_vector(Vec,CodeVec),
+                %md5_hash(CodeVec,Hash,[]),
+                sha_hash(CodeVec,Hash,[algorithm(sha256)]),
+                %sha_hash(CodeVec,Hash,[algorithm(sha512)]),
+                (  dss_semantics:dss_lawful_vector(Vec)
+                -> write('V '), Lawful = true
+                ;  write('X '), Lawful = false
+                ),
+                write(Sen),write(' => '),write(Hash),nl),Quads),
         length(Quads,NumQuads),
         format('~nNumber of sentence-DSS pairs: ~d~n',[NumQuads]),
         setof(Hash,Sen^Sem^Lawful^member((Sen,Sem,Hash,Lawful),Quads),UniqueVecs),

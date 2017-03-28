@@ -96,20 +96,21 @@ df.mtx <- as.matrix(df.obs)
 # Frank, S. L., Haselager, W. F. G., and van Rooij, I. (2009). Connectionist
 #     semantic systematicity. Cognition, 110(3):358–379.
 ##
-reduce <- function(dims, epochs = 20, alpha = 0.1, alpha_sf = 0.1, beta = 0.00008, beta_sf = 0.1, write = FALSE)
+reduce <- function(dims, epochs = 20, alpha = 0.1, alpha_sf = 0.1,
+        beta = 0.00008, beta_sf = 0.1, write = FALSE)
 {
         biases  <- rep(1.0, dims)
         weights <- matrix(rep(0.5, dims * ncol(df.mtx)), dims, ncol(df.mtx))
 
         epoch <- 1
         while (epoch <= epochs) {
-                cat(paste("Epoch:", epoch, "Alpha:", alpha, "AlphaSF:", alpha_sf, "Beta:", beta, "BetaSF:", beta_sf), file = stderr())
+                cat(paste("Epoch:", epoch, "Alpha:", alpha,
+                        "AlphaSF:", alpha_sf, "Beta:", beta,"BetaSF:", beta_sf), file = stderr())
                 cat("\n")
 
                 for (i in 1 : nrow(df.mtx)) {
                         dv <- c()
                         for (j in 1 : nrow(weights)) {
-
                                 ## (1): dist(u_i,Sk) = sum_a|u_i(a) - Sk(a)|
                                 dv <- c(dv, sum(abs(df.mtx[i,] - weights[j,]) - biases[j]))
 
@@ -129,7 +130,7 @@ reduce <- function(dims, epochs = 20, alpha = 0.1, alpha_sf = 0.1, beta = 0.0000
 
                 epoch <- epoch + 1;
 
-                # sacle alpha and beta
+                # scale alpha and beta
                 alpha <- alpha - alpha_sf * alpha;
                 beta  <- beta  - beta_sf  * beta;
         }
@@ -140,7 +141,7 @@ reduce <- function(dims, epochs = 20, alpha = 0.1, alpha_sf = 0.1, beta = 0.0000
                 cat(paste("Wrote:", vec_file, "\n"), file = stderr())
                 colnames(weights) <- colnames(df.mtx)
                 write.table(weights, vec_file, quote = FALSE, sep = " ",
-                            col.names = TRUE, row.names = FALSE)
+                        col.names = TRUE, row.names = FALSE)
         }
 
         weights

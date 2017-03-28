@@ -51,7 +51,7 @@ cols <- ncol(df.vec)
 
 # reshape
 df.vec <- melt(df.vec)
-df.vec$dimension <- rep(seq(1,dims,1),cols)
+df.vec$dimension <- rep(seq(1, dims, 1), cols)
 
 # heatmap
 hmap <- ggplot(df.vec, aes(variable, dimension))

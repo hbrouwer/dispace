@@ -45,42 +45,42 @@ df_cond  <- df[df$Type == "cond",]
 
 # prior probabilities scatterplot
 quartz()
-print(xyplot(df_prior$Pr_reduced ~ df_prior$Pr_original,
-             main=paste("r =", signif(cor(df_prior$Pr_reduced, df_prior$Pr_original), 3)),
-             xlab=expression(paste("Original ", tau, "(b)")),
-             ylab=expression(paste("Reduced", tau, "(b)"))))
-print(cor(df_prior$Pr_reduced, df_prior$Pr_original))
+print(xyplot(df_prior$Pr_reduced ~ df_prior$Pr_unreduced,
+        main = paste("r =", signif(cor(df_prior$Pr_reduced, df_prior$Pr_unreduced), 3)),
+        xlab = expression(paste("Unreduced ", tau, "(b)")),
+        ylab = expression(paste("Reduced", tau, "(b)"))))
+print(cor(df_prior$Pr_reduced, df_prior$Pr_unreduced))
 
 # prior probabilities histogram
 quartz()
 print(histogram(df_prior$Pr_reduced,
-          main=expression(paste("Distribution of ", tau, "(b)")),
-          xlab=expression(paste("Reduced ", tau, "(b)"))))
+        main = expression(paste("Distribution of ", tau, "(b)")),
+        xlab = expression(paste("Reduced ", tau, "(b)"))))
 
 # conjunction probabilities scatterplot
 quartz()
-print(xyplot(df_conj$Pr_reduced ~ df_conj$Pr_original,
-             main=paste("r =", signif(cor(df_conj$Pr_reduced, df_conj$Pr_original), 3)),
-             xlab=expression(paste("Original ", tau, "(a&b)")),
-             ylab=expression(paste("Reduced", tau, "(a&b)"))))
-print(cor(df_conj$Pr_reduced, df_conj$Pr_original))
+print(xyplot(df_conj$Pr_reduced ~ df_conj$Pr_unreduced,
+        main = paste("r =", signif(cor(df_conj$Pr_reduced, df_conj$Pr_unreduced), 3)),
+        xlab = expression(paste("Unreduced ", tau, "(a&b)")),
+        ylab = expression(paste("Reduced", tau, "(a&b)"))))
+print(cor(df_conj$Pr_reduced, df_conj$Pr_unreduced))
 
 # conjunction probabilities histogram
 quartz()
 print(histogram(df_conj$Pr_reduced,
-          main=expression(paste("Distribution of ", tau, "(a&b)")),
-          xlab=expression(paste("Reduced ", tau, "(a&b)"))))
+        main = expression(paste("Distribution of ", tau, "(a&b)")),
+        xlab = expression(paste("Reduced ", tau, "(a&b)"))))
 
 # conditional probabilities scatterplot
 quartz()
-print(xyplot(df_cond$Pr_reduced ~ df_cond$Pr_original,
-             main=paste("r =", signif(cor(df_cond$Pr_reduced, df_cond$Pr_original), 3)),
-             xlab=expression(paste("Original ", tau, "(a|b)")),
-             ylab=expression(paste("Reduced", tau, "(a|b)"))))
-print(cor(df_cond$Pr_reduced, df_cond$Pr_original))
+print(xyplot(df_cond$Pr_reduced ~ df_cond$Pr_unreduced,
+        main = paste("r =", signif(cor(df_cond$Pr_reduced, df_cond$Pr_unreduced), 3)),
+        xlab = expression(paste("Unreduced ", tau, "(a|b)")),
+        ylab = expression(paste("Reduced", tau, "(a|b)"))))
+print(cor(df_cond$Pr_reduced, df_cond$Pr_unreduced))
 
 # conditional probabilities histogram
 quartz()
 print(histogram(df_cond$Pr_reduced,
-          main=expression(paste("Distribution of ", tau, "(a|b)")),
-          xlab=expression(paste("Reduced ", tau, "(a|b)"))))
+        main = expression(paste("Distribution of ", tau, "(a|b)")),
+        xlab = expression(paste("Reduced ", tau, "(a|b)"))))

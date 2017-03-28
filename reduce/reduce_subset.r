@@ -67,53 +67,57 @@ df.mtx <- as.matrix(df.obs)
 ##
 reduce <- function(dims, epochs, write = FALSE)
 {
-        compVec <- comprehension_vector(df.mtx)
+        cv <- comprehension_vector(df.mtx)
 
-        reducedMtx <- matrix()
-        reducedSim <- 0
+        reduced.mtx <- matrix()
+        reduced.sim <- 0
 
         epoch <- 1
         while (epoch <= epochs) {
                 cat(paste("Epoch:", epoch), file = stderr())
-                sdims <- sample(1 : nrow(df.mtx), dims, replace = FALSE)
                 
-                trialMtx <- df.mtx[sdims,]
-                trialCompVec <- comprehension_vector(trialMtx)
-                if (!all_informative_vectors(trialMtx)
-                    | !equal_hard_constraints(compVec, trialCompVec)) {
+                # (1): Take a subset of k rows of matrix X, and call it X'
+                trial.mtx <- df.mtx[sample(1 : nrow(df.mtx), dims, replace = FALSE),]
+                trial.cv  <- comprehension_vector(trial.mtx)
+
+                # (2): Check if all columns of matrix X' are informative, and
+                # if the reduced matrix encodes the same hard constraints as 
+                # the unreduced matrix
+                if (!all_informative_vectors(trial.mtx) | !equal_hard_constraints(cv, trial.cv)) {
                         cat("\tBad sample ... Skipping epoch!\n", file = stderr())
                         next
                 }
-                trialSim <- similarity(compVec, comprehension_vector(trialMtx))
-                cat(paste("\tSim:", trialSim), file = stderr())
 
-                if (epoch == 1) {
-                        reducedMtx <- trialMtx
-                        reducedSim <- trialSim
-                } else {
-                        if (trialSim > reducedSim) {
-                                reducedMtx <- trialMtx
-                                reducedSim <- trialSim
-                                cat(" ***", file = stderr())
-                        }
+                # (3): Compute the similarity between X and X' on the basis of
+                # the comprehension scores in X and X'.
+                trial.sim <- similarity(cv, comprehension_vector(trial.mtx))
+                cat(paste("\tSim:", trial.sim), file = stderr())
+
+                # (4): If X' is the best approximation of X so far, store it
+                if (epoch == 1 | trial.sim > reduced.sim) {
+                        reduced.mtx <- trial.mtx
+                        reduced.sim <- trial.sim
+                        cat(" ***", file = stderr())
                 }
 
                 cat("\n", file = stderr())
+
+                # (5): Run next epoch, and rerun from step (1)
                 epoch <- epoch + 1
         }
 
-        cat(paste("Sim: ", reducedSim, "\n"), file = stderr())
+        cat(paste("Sim: ", reduced.sim, "\n"), file = stderr())
 
         # write matrix (if required)
         if (write) {
                 vec_file <- paste(model_fb, ".vectors", sep = "")
                 cat(paste("Wrote:", vec_file, "\n"), file = stderr())
-                colnames(reducedMtx) <- colnames(df.mtx)
-                write.table(reducedMtx, vec_file, quote = FALSE, sep = " ",
-                            col.names = TRUE, row.names = FALSE)
+                colnames(reduced.mtx) <- colnames(df.mtx)
+                write.table(reduced.mtx, vec_file, quote = FALSE, sep = " ",
+                        col.names = TRUE, row.names = FALSE)
         }
-
-        reducedMtx
+        
+        reduced.mtx
 }
 
 # equal hard constraints
@@ -174,7 +178,7 @@ cond_prob <- function(a, b)
 comprehension_score <- function(a, b)
 {
         pr_ab <- cond_prob(a, b)
-        pr_a <- prior_prob(a)
+        pr_a  <- prior_prob(a)
 
         if (pr_ab > pr_a) {
                 cs <- (pr_ab - pr_a) / (1.0 - pr_a)

@@ -43,8 +43,8 @@ if (!exists("model_fb")) {
 
 df <- read.csv(paste(model_fb, ".probabilities", sep = ""), head = TRUE)
 
-# original or reduced
-#df$Pr <- df$Pr_original
+# unreduced or reduced
+#df$Pr <- df$Pr_unreduced
 df$Pr <- df$Pr_reduced
 
 probs <- function(event)
