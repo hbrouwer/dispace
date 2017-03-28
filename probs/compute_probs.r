@@ -1,0 +1,142 @@
+##
+#    ,--.,--.
+#  ,-|  |`--' ,---.  ,---.  ,--,--. ,---. ,---.
+# ' .-. |,--.(  .-' | .-. |' ,-.  || .--'| .-. :
+# \ `-' ||  |.-'  `)| '-' '\ '-'  |\ `--.\   --.
+#  `---' `--'`----' |  |-'  `--`--' `---' `----'
+#                   `--'
+#     "To wander, to roam, move about."
+#
+# Copyright 2014-2017 Harm Brouwer <me@hbrouwer.eu>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##
+
+require(data.table)
+
+###########################################################################
+###########################################################################
+
+if (!exists("model"))
+        stop("'model' not set")
+if (!exists("model_fb")) {
+        model_nm <- tail(strsplit(model, "/")[[1]], 1)
+        model_fb <- paste(model, model_nm, sep = "/")
+}
+
+###########################################################################
+###########################################################################
+
+obs_file <- paste(model_fb, ".observations", sep = "")
+vec_file <- paste(model_fb, ".vectors", sep = "")
+out_file <- paste(model_fb, ".probabilities", sep = "")
+
+# read observations and vectors
+cat("Reading observations ...\n", file = stderr())
+df.obs <- read.csv(obs_file, sep = " ", head = TRUE, check.names = FALSE)
+cat("Reading vectors ...\n", file = stderr())
+df.vec <- read.csv(vec_file, sep = " ", head = TRUE, check.names = FALSE)
+
+# number of events
+n.events <- length(colnames(df.obs))
+
+# add negation probabilities
+for (e in names(df.obs)) {
+        df.obs[,paste("not(", e, ")", sep = "")] <- (1 - df.obs[,e])
+        df.vec[,paste("not(", e, ")", sep = "")] <- (1 - df.vec[,e])
+}
+
+# compute priors
+cat("Computing prior probabilities ...\n", file = stderr())
+df.prior <- data.frame(
+        Type = rep("prior", 2 * n.events),
+        Item = rep(NA, 2 * n.events),
+        Pr_original = rep(NA, 2 * n.events),
+        Pr_reduced  = rep(NA, 2 * n.events))
+n <- 0
+for (e in names(df.obs)) {
+        n <- n + 1
+        df.prior[n,]$Item = e
+        df.prior[n,]$Pr_original = (1 / nrow(df.obs)) * sum(df.obs[,e])
+        df.prior[n,]$Pr_reduced  = (1 / nrow(df.vec)) * sum(df.vec[,e])
+}
+
+# convert prior data frame to table
+tbl.prior <- data.table(df.prior)
+setkey(tbl.prior, Item)
+
+# compute conjunction probabilities
+cat("Computing conjunction probabilities ...\n", file = stderr())
+df.conj <- data.frame(
+        Type = rep("conj", 2 * n.events * n.events),
+        Item = rep(NA, 2 * n.events * n.events),
+        Pr_original = rep(NA, 2 * n.events * n.events),
+        Pr_reduced  = rep(NA, 2 * n.events * n.events))
+n <- 0
+for (e2 in names(df.obs)) {
+        for (e1 in names(df.obs)) {
+                # skip negated events as first argument
+                if (all(substr(e1, 1, 4) == "not("))
+                        next
+                n <- n + 1
+                cat(paste(n, ":", e1, "^", e2, "\n"))
+                df.conj[n,]$Item <- paste(e1, "^", e2, sep = "")
+                if (all(e1 == e2)) {
+                        df.conj[n,]$Pr_original <- tbl.prior[e1,]$Pr_original
+                        df.conj[n,]$Pr_reduced  <- tbl.prior[e1,]$Pr_reduced
+                } else {
+                        df.conj[n,]$Pr_original <- (1 / nrow(df.obs)) * sum(df.obs[,e1] * df.obs[,e2])
+                        df.conj[n,]$Pr_reduced  <- (1 / nrow(df.vec)) * sum(df.vec[,e1] * df.vec[,e2])
+                }
+        }
+}
+
+# convert conjunction data frame to table
+tbl.conj <- data.table(df.conj)
+setkey(tbl.conj, Item)
+
+# compute conditional probabilities
+cat("Computing conditional probabilities ...\n", file = stderr())
+df.cond <- data.frame(
+        Type = rep("cond", 2 * n.events * n.events),
+        Item = rep(NA, 2 * n.events * n.events),
+        Pr_original = rep(0, 2 * n.events * n.events),
+        Pr_reduced  = rep(0, 2 * n.events * n.events))
+n <- 0
+for (e2 in names(df.obs)) {
+        prior_original <- tbl.prior[e2,]$Pr_original
+        prior_reduced  <- tbl.prior[e2,]$Pr_reduced
+        for (e1 in names(df.obs)) {
+                # skip negated events as first argument
+                if (all(substr(e1, 1, 4) == "not("))
+                        next
+                n <- n + 1
+                cat(paste(n, ":", e1, "|", e2, "\n"))                
+                conj <- paste(e1, "^", e2, sep = "")
+                df.cond[n,]$Item <- paste(e1, "|", e2, sep = "")
+                if (prior_original > 0)
+                        df.cond[n,]$Pr_original <- tbl.conj[conj,]$Pr_original / prior_original
+                if (prior_reduced > 0)
+                        df.cond[n,]$Pr_reduced  <- tbl.conj[conj,]$Pr_reduced  / prior_reduced
+        }
+}
+
+# merge data frames
+df <- data.frame()
+df <- rbind(df, df.prior)
+df <- rbind(df, df.conj)
+df <- rbind(df, df.cond)
+
+# write data frame
+cat("Writing probabilities ...\n", file = stderr())
+write.csv(df, file = out_file, quote = TRUE, row.names = FALSE)
