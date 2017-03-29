@@ -22,6 +22,33 @@
 # limitations under the License.
 ##
 
+## REQUIRES:
+##
+## model: path to a DSS model.
+##
+## model_reduced: boolean flagging whether reduced probabilities should be
+##      used (TRUE) or not (FALSE). 
+##
+## DEFINES:
+##
+## prior_probs(): plots the prior Pr(a) probabilities in the world.
+##
+## conj_probs(e): plots the conjuction probabilities Pr(e & B) and Pr(A & e)
+##      for the specified event e
+##
+## cond_probs(e): plots the conditional probabilities Pr(e | B) and Pr(A | e)
+##      for the specified event e.
+##
+## comprh_scores(e): plots the comprehension scores cs(e,B) and Pr(A,e) for
+##      the specified event e.
+##
+## comprh_scores_heatmap(): plots a heatmap of the comprehension scores cs(a,b)
+##      for every combination of events a and b.
+##
+## comprh_scores_diff_heatmap(): plots a heatmap of the difference in 
+##      comprehension scores cs(a,b) for every combination of events a and b as 
+##      determined from the reduced and unreduced probabilities.
+
 require(ggplot2)
 require(grid)
 require(gridExtra)
@@ -37,342 +64,210 @@ if (!exists("model_fb")) {
         model_nm <- tail(strsplit(model, "/")[[1]], 1)
         model_fb <- paste(model, model_nm, sep = "/")
 }
+if (!exists("model_reduced"))
+        stop("'model_reduced' not set")
 
 ###########################################################################
 ###########################################################################
 
 df <- read.csv(paste(model_fb, ".probabilities", sep = ""), head = TRUE)
 
-# unreduced or reduced
-#df$Pr <- df$Pr_unreduced
-df$Pr <- df$Pr_reduced
-
-probs <- function(event)
-{
-        ### prior probabilities ###
-
-        dfpr <- df[df$Type == "prior" & substr(df$Item,1,4) != "not(",]
-
-        gbpr_A <- ggplot(dfpr, aes(x = Item, y = Pr, fill = Pr))
-        gbpr_A <- gbpr_A + geom_bar(stat = "identity", position = "stack")
-        gbpr_A <- gbpr_A + guides(fill=FALSE)
-        gbpr_A <- gbpr_A + ggtitle("Pr(a)")
-        gbpr_A <- gbpr_A + xlab("Event a")
-        gbpr_A <- gbpr_A + ylab("Probability")
-        gbpr_A <- gbpr_A + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-
-        ### conjunction probabilities ###
-
-        dfcj <- df[df$Type == "conj",]
-
-        dfcj$A <- sapply(strsplit(as.character(dfcj$Item),"\\^"),"[",1)
-        dfcj$B <- sapply(strsplit(as.character(dfcj$Item),"\\^"),"[",2)
-
-        dfcj_Ab <- dfcj[dfcj$A == event & substr(dfcj$B,1,4) != "not(",] # (event&B)
-        dfcj_aB <- dfcj[dfcj$B == event,]                                # (A&event)
-
-        # plot for (event&B)
-        gbcj_Ab <- ggplot(dfcj_Ab, aes(x = B, y = Pr, fill = Pr))
-        gbcj_Ab <- gbcj_Ab + geom_bar(stat = "identity", position = "stack")
-        gbcj_Ab <- gbcj_Ab + guides(fill = FALSE)
-        gbcj_Ab <- gbcj_Ab + ggtitle(paste("Pr(", event, "&b)", sep = ""))
-        gbcj_Ab <- gbcj_Ab + xlab("Event b")
-        gbcj_Ab <- gbcj_Ab + ylab("Probability")
-        gbcj_Ab <- gbcj_Ab + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-
-        ### conditional probabilities ###
-
-        dfcd <- df[df$Type == "cond",]
-
-        dfcd$A <- sapply(strsplit(as.character(dfcd$Item),"\\|"),"[",1)
-        dfcd$B <- sapply(strsplit(as.character(dfcd$Item),"\\|"),"[",2)
-
-        dfcd_Ab <- dfcd[dfcd$A == event & substr(dfcd$B,1,4) != "not(",] # (event|B)
-        dfcd_aB <- dfcd[dfcd$B == event,]                                # (A|event)
-
-        # plot for (event|B)
-        gbcd_Ab <- ggplot(dfcd_Ab, aes(x = B, y = Pr, fill = Pr))
-        gbcd_Ab <- gbcd_Ab + geom_bar(stat = "identity", position = "stack")
-        gbcd_Ab <- gbcd_Ab + guides(fill = FALSE)
-        gbcd_Ab <- gbcd_Ab + ggtitle(paste("Pr(", event, "|b)", sep = ""))
-        gbcd_Ab <- gbcd_Ab + xlab("Event b")
-        gbcd_Ab <- gbcd_Ab + ylab("Probability")
-        gbcd_Ab <- gbcd_Ab + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-
-        # plot for (A|event)
-        gbcd_aB <- ggplot(dfcd_aB, aes(x = A, y = Pr, fill = Pr))
-        gbcd_aB <- gbcd_aB + geom_bar(stat = "identity", position = "stack")
-        gbcd_aB <- gbcd_aB + guides(fill = FALSE)
-        gbcd_aB <- gbcd_aB + ggtitle(paste("Pr(a|", event, ")", sep = ""))
-        gbcd_aB <- gbcd_aB + xlab("Event a")
-        gbcd_aB <- gbcd_aB + ylab("Probability")
-        gbcd_aB <- gbcd_aB + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-
-        quartz()
-        grid.arrange(gbpr_A, gbcj_Ab, gbcd_Ab, gbcd_aB, nrow = 2, ncol = 2, top=paste("Probabilities for", event))
+# Probabilities from unreduced or reduced vectors
+if (!model_reduced) {
+        df$Pr <- df$Pr_unreduced
+} else {
+        df$Pr <- df$Pr_reduced
 }
 
+###########################################################################
+###########################################################################
 
-# prior event probabilities
+## 
+# Plots the prior Pr(a) probabilities in the world.
+##
 prior_probs <- function()
 {
-        dfp <- df[df$Type == "prior" & substr(df$Item,1,4) != "not(",]
+        df.prior <- df[df$Type == "prior" & substr(df$Item,1,4) != "not(",]
 
-        gbp_A <- ggplot(dfp, aes(x = Item, y = Pr, fill = Pr))
-        gbp_A <- gbp_A + geom_bar(stat = "identity", position = "stack")
-        gbp_A <- gbp_A + guides(fill = FALSE)
-        gbp_A <- gbp_A + ggtitle("Pr(a)")
-        gbp_A <- gbp_A + xlab("Event a")
-        gbp_A <- gbp_A + ylab("Probability")
-        gbp_A <- gbp_A + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-
-        quartz()
-        gbp_A
-}
-
-# conditional event probabilities
-cond_probs <- function(event)
-{
-        dfc <- df[df$Type == "cond",]
-
-        dfc$A <- sapply(strsplit(as.character(dfc$Item),"\\|"),"[",1)
-        dfc$B <- sapply(strsplit(as.character(dfc$Item),"\\|"),"[",2)
-
-        dfc_Ab <- dfc[dfc$A == event & substr(dfc$B,1,4) != "not(",] # (event|B)
-        dfc_aB <- dfc[dfc$B == event,]                               # (A|event)
-
-        # plot for (event|B)
-        gbp_Ab <- ggplot(dfc_Ab, aes(x = B, y = Pr, fill = Pr))
-        gbp_Ab <- gbp_Ab + geom_bar(stat = "identity", position = "stack")
-        gbp_Ab <- gbp_Ab + guides(fill = FALSE)
-        gbp_Ab <- gbp_Ab + ggtitle(paste("Pr(", event, "|b)", sep = ""))
-        gbp_Ab <- gbp_Ab + xlab("Event b")
-        gbp_Ab <- gbp_Ab + ylab("Probability")
-        gbp_Ab <- gbp_Ab + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-
-        # plot for (A|event)
-        gbp_aB <- ggplot(dfc_aB, aes(x = A, y = Pr, fill = Pr))
-        gbp_aB <- gbp_aB + geom_bar(stat = "identity", position = "stack")
-        gbp_aB <- gbp_aB + guides(fill = FALSE)
-        gbp_aB <- gbp_aB + ggtitle(paste("Pr(a|", event, ")", sep = ""))
-        gbp_aB <- gbp_aB + xlab("Event a")
-        gbp_aB <- gbp_aB + ylab("Probability")
-        gbp_aB <- gbp_aB + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
+        plot <- ggplot(df.prior, aes(x = Item, y = Pr, fill = Pr))
+        plot <- plot + geom_bar(stat = "identity", position = "stack")
+        plot <- plot + guides(fill = FALSE)
+        plot <- plot + ggtitle("Pr(a)")
+        plot <- plot + xlab("Event a")
+        plot <- plot + ylab("Probability")
+        plot <- plot + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
 
         quartz()
-        grid.arrange(gbp_Ab, gbp_aB, nrow = 2, top = paste("Conditional probabilities for", event))
+        plot
 }
 
-# conjunction event probabilities
+##
+# Plots the conjuction probabilities Pr(e & B) and Pr(A & e) for the
+# specified event e.
+##
 conj_probs <- function(event)
 {
-        dfc <- df[df$Type == "conj",]
+        df.conj <- df[df$Type == "conj",]
 
-        dfc$A <- sapply(strsplit(as.character(dfc$Item),"\\^"),"[",1)
-        dfc$B <- sapply(strsplit(as.character(dfc$Item),"\\^"),"[",2)
+        df.conj$A <- sapply(strsplit(as.character(df.conj$Item), "\\^"), "[", 1)
+        df.conj$B <- sapply(strsplit(as.character(df.conj$Item), "\\^"), "[", 2)
+        
+        df.conj1 <- df.conj[df.conj$A == event & substr(df.conj$B, 1, 4) != "not(",] # (event & B)
+        df.conj2 <- df.conj[df.conj$B == event,]                                     # (A & event)
 
-        dfc_Ab <- dfc[dfc$A == event & substr(dfc$B,1,4) != "not(",] # (event&B)
-        dfc_aB <- dfc[dfc$B == event,]                               # (A&event)
+        # plot (event & B)
+        plot1 <- ggplot(df.conj1, aes(x = B, y = Pr, fill = Pr))
+        plot1 <- plot1 + geom_bar(stat = "identity", position = "stack")
+        plot1 <- plot1 + guides(fill = FALSE)
+        plot1 <- plot1 + ggtitle(paste("Pr(", event, " & b)", sep = ""))
+        plot1 <- plot1 + xlab("Event b")
+        plot1 <- plot1 + ylab("Probability")
+        plot1 <- plot1 + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
 
-        # plot for (event&B)
-        gbp_Ab <- ggplot(dfc_Ab, aes(x = B, y = Pr, fill = Pr))
-        gbp_Ab <- gbp_Ab + geom_bar(stat = "identity", position = "stack")
-        gbp_Ab <- gbp_Ab + guides(fill = FALSE)
-        gbp_Ab <- gbp_Ab + ggtitle(paste("Pr(", event, "&b)", sep = ""))
-        gbp_Ab <- gbp_Ab + xlab("Event b")
-        gbp_Ab <- gbp_Ab + ylab("Probability")
-        gbp_Ab <- gbp_Ab + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-
-        # plot for (A&event)
-        gbp_aB <- ggplot(dfc_aB, aes(x=A, y = Pr, fill = Pr))
-        gbp_aB <- gbp_aB + geom_bar(stat = "identity", position = "stack")
-        gbp_aB <- gbp_aB + guides(fill = FALSE)
-        gbp_aB <- gbp_aB + ggtitle(paste("Pr(a&", event, ")", sep=""))
-        gbp_aB <- gbp_aB + xlab("Event a")
-        gbp_aB <- gbp_aB + ylab("Probability")
-        gbp_aB <- gbp_aB + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
+        # plot (A & event)
+        plot2 <- ggplot(df.conj2, aes(x = A, y = Pr, fill = Pr))
+        plot2 <- plot2 + geom_bar(stat = "identity", position = "stack")
+        plot2 <- plot2 + guides(fill = FALSE)
+        plot2 <- plot2 + ggtitle(paste("Pr(a & ", event, ")", sep=""))
+        plot2 <- plot2 + xlab("Event a")
+        plot2 <- plot2 + ylab("Probability")
+        plot2 <- plot2 + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
 
         quartz()
-        grid.arrange(gbp_Ab, gbp_aB, nrow = 2, top = paste("Conjunction probabilities for", event))
+        grid.arrange(plot1, plot2, nrow = 2, top = paste("Conjunction probabilities for", event))
 }
 
 ##
-# This plots comprehension scores to answer two questions:
-#
-# 1) From what events Y do we understand event X? (X|Y)
-#
-# 2) What events Y do we understand from event X? (Y|X)
+# Plots the conditional probabilities Pr(e | B) and Pr(A | e) for the
+# specified event e.
 ##
-scores <- function(event)
+cond_probs <- function(event)
 {
-        dfc <- df[df$Type == "cond",]
+        df.cond <- df[df$Type == "cond",]
 
-        dfc$A <- sapply(strsplit(as.character(dfc$Item),"\\|"),"[",1)
-        dfc$B <- sapply(strsplit(as.character(dfc$Item),"\\|"),"[",2)
+        df.cond$A <- sapply(strsplit(as.character(df.cond$Item), "\\|"), "[", 1)
+        df.cond$B <- sapply(strsplit(as.character(df.cond$Item), "\\|"), "[", 2)
 
-        dfc_Ab <- dfc[dfc$A == event & substr(dfc$B,1,4) != "not(",] # (event|B)
-        dfc_aB <- dfc[dfc$B == event,]                               # (A|event)
-        #dfc_Ab <- dfc[dfc$A == event & dfc$B != event & substr(dfc$B,1,4) != "not(",] # (event|B)
-        #dfc_aB <- dfc[dfc$B == event & dfc$A != event,]                               # (A|event)
+        df.cond1 <- df.cond[df.cond$A == event & substr(df.cond$B, 1, 4) != "not(",] # (event | B)
+        df.cond2 <- df.cond[df.cond$B == event,]                                     # (A | event)
 
-        # compute the comprehension scores
-        for (i in 1 : nrow(dfc_Ab)) {
-                dfc_Ab$Comp_score[i] = cscore(dfc_Ab$Pr[i], df[df$Item == dfc_Ab$A[i],]$Pr[1])
-                dfc_aB$Comp_score[i] = cscore(dfc_aB$Pr[i], df[df$Item == dfc_aB$A[i],]$Pr[1])
-        }
+        # plot (event | B)
+        plot1 <- ggplot(df.cond1, aes(x = B, y = Pr, fill = Pr))
+        plot1 <- plot1 + geom_bar(stat = "identity", position = "stack")
+        plot1 <- plot1 + guides(fill = FALSE)
+        plot1 <- plot1 + ggtitle(paste("Pr(", event, " | b)", sep = ""))
+        plot1 <- plot1 + xlab("Event b")
+        plot1 <- plot1 + ylab("Probability")
+        plot1 <- plot1 + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
 
-        # plot of from what events Y we understand event X
-        gbp_Ab <- ggplot(dfc_Ab, aes(x = B, y = Comp_score, fill = Comp_score))
-        gbp_Ab <- gbp_Ab + geom_bar(stat = "identity", position = "dodge")
-        gbp_Ab <- gbp_Ab + guides(fill = FALSE)
-        gbp_Ab <- gbp_Ab + ggtitle(paste("Events that lead to understanding", event, sep = " "))
-        gbp_Ab <- gbp_Ab + xlab("Event b")
-        gbp_Ab <- gbp_Ab + ylab("Comprehension score")
-        gbp_Ab <- gbp_Ab + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-        gbp_Ab <- gbp_Ab + coord_cartesian(ylim = c(-1.0, 1.0))
-
-        # plot of what events Y we understand from event X
-        gbp_aB <- ggplot(dfc_aB, aes(x = A, y = Comp_score, fill = Comp_score))
-        gbp_aB <- gbp_aB + geom_bar(stat = "identity", position = "dodge")
-        gbp_aB <- gbp_aB + guides(fill = FALSE)
-        gbp_aB <- gbp_aB + ggtitle(paste("Events understood from", event, sep = " "))
-        gbp_aB <- gbp_aB + xlab("Event a")
-        gbp_aB <- gbp_aB + ylab("Comprehension score")
-        gbp_aB <- gbp_aB + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-        gbp_aB <- gbp_aB + coord_cartesian(ylim = c(-1.0, 1.0)) 
+        # plot (A | event)
+        plot2 <- ggplot(df.cond2, aes(x = A, y = Pr, fill = Pr))
+        plot2 <- plot2 + geom_bar(stat = "identity", position = "stack")
+        plot2 <- plot2 + guides(fill = FALSE)
+        plot2 <- plot2 + ggtitle(paste("Pr(a | ", event, ")", sep = ""))
+        plot2 <- plot2 + xlab("Event a")
+        plot2 <- plot2 + ylab("Probability")
+        plot2 <- plot2 + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
 
         quartz()
-        #grid.arrange(gbp_Ab, gbp_aB, nrow=2, top=paste("Comprehension scores for", event))
-        grid.arrange(gbp_aB, gbp_Ab, nrow = 2, top = paste("Comprehension scores for", event))
-        #print(gbp_aB)
+        grid.arrange(plot1, plot2, nrow = 2, top = paste("Conditional probabilities for", event))        
 }
 
-# matrix of comprehension scores
-scores_matrix <- function()
+##
+# Plots the comprehension scores cs(e,B) and Pr(A,e) for the
+# specified event e.
+##
+comprh_scores <- function(event)
 {
-        dfp <- df[df$Type == "prior",]
-        tbl.dfp <- data.table(dfp)
-        setkey(tbl.dfp, Item)
+        df.comp <- df[df$Type == "cond",]
 
-        dfc <- df[df$Type == "cond",]
-        tbl.dfc <- data.table(dfc)
-        setkey(tbl.dfc, Item)
+        df.comp$A <- sapply(strsplit(as.character(df.comp$Item), "\\|"), "[", 1)
+        df.comp$B <- sapply(strsplit(as.character(df.comp$Item), "\\|"), "[", 2)
 
-        items <- as.character(factor(df[df$Type == "prior" & substr(df$Item,1,4) != "not(",]$Item))
+        df.comp1 <- df.comp[df.comp$A == event & substr(df.comp$B, 1, 4) != "not(",] # (event | B)
+        df.comp2 <- df.comp[df.comp$B == event,]                                     # (A | event)
 
-        mtx <- matrix(nrow = length(items), ncol = length(items), dimnames = list(items, items))
+        # compute comprehension scores
+        for (i in 1 : nrow(df.comp1)) {
+                df.comp1$CS[i] = comprh_score(df.comp1$Pr[i], df[df$Item == df.comp1$A[i],]$Pr[1])
+                df.comp2$CS[i] = comprh_score(df.comp2$Pr[i], df[df$Item == df.comp2$A[i],]$Pr[1])
+        } 
 
-        cat("Computing comprehension scores matrix ...\n", file = stderr())
-        for (a in 1 : length(items)) {
-                cat(paste(a, ":", items[a], "\n"))
-                prior_a <- tbl.dfp[items[a],]$Pr
-                for (b in 1 : length(items)) {
-                        cond_ab <- tbl.dfc[paste(items[a], "|" , items[b], sep=""),]$Pr
-                        mtx[a,b] <- cscore(cond_ab, prior_a)
-                }
-        }
+        # plot cs(e,B)
+        plot1 <- ggplot(df.comp1, aes(x = B, y = CS, fill = CS))
+        plot1 <- plot1 + geom_bar(stat = "identity", position = "dodge")
+        plot1 <- plot1 + guides(fill = FALSE)
+        plot1 <- plot1 + ggtitle(paste("Events that lead to understanding", event, sep = " "))
+        plot1 <- plot1 + xlab("Event b")
+        plot1 <- plot1 + ylab("Comprehension score")
+        plot1 <- plot1 + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
+        plot1 <- plot1 + coord_cartesian(ylim = c(-1.0, 1.0))
 
-        mtx
+        # plot cs(A,e)
+        plot2 <- ggplot(df.comp2, aes(x = A, y = CS, fill = CS))
+        plot2 <- plot2 + geom_bar(stat = "identity", position = "dodge")
+        plot2 <- plot2 + guides(fill = FALSE)
+        plot2 <- plot2 + ggtitle(paste("Events understood from", event, sep = " "))
+        plot2 <- plot2 + xlab("Event a")
+        plot2 <- plot2 + ylab("Comprehension score")
+        plot2 <- plot2 + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
+        plot2 <- plot2 + coord_cartesian(ylim = c(-1.0, 1.0)) 
+
+        quartz()
+        grid.arrange(plot1, plot2, nrow = 2, top = paste("Comprehension scores for", event))
 }
 
-###########################################################################
-###########################################################################
-
-# only extremes
-scores_matrix_extremes <- function(mtx)
+##
+# Plots a heatmap of the comprehension scores cs(a,b) for every
+# combination of events a and b.
+##
+comprh_scores_heatmap <- function()
 {
-        emtx <- mtx
-        emtx[emtx > -1 & emtx < 1] <- 0
-        emtx
-}
-
-# heatmap of comprehension scores matrix
-scores_heatmap <- function(mtx)
-{
-        df.sm <- melt(mtx)
+        df.sm <- melt(comprh_scores_matrix(df))
 
         hmap <- ggplot(df.sm, aes(X1, X2))
         hmap <- hmap + geom_tile(aes(fill = value))
-        #hmap <- hmap + scale_fill_gradient(low = "darkslategray", high = "deeppink", limits = c(-1,1))
         hmap <- hmap + scale_fill_gradient2(low = "firebrick1", mid="white", high="chartreuse3", limits = c(-1,1))
         hmap <- hmap + ggtitle("Comprehension scores")
         hmap <- hmap + xlab("Atomic event a")
         hmap <- hmap + ylab("Atomic event b")
         hmap <- hmap + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-        #hmap <- hmap + coord_cartesian(ylim = c(0, dims))
-
-        # for Japan ...
-        hmap <- hmap + theme_update(axis.title = element_text(size = 20))
-        hmap <- hmap + theme_update(axis.text = element_text(size = 20))
-        hmap <- hmap + theme_update(title = element_text(size = 20))
-        hmap <- hmap + theme_update(legend.key.size = unit(50, "pt"))
-        hmap <- hmap + theme_update(legend.title = element_text(size = 20))
-        hmap <- hmap + theme_update(legend.text = element_text(size = 20))
 
         quartz()
-        print(hmap)
-
-        ggsave("~/Desktop/comp_hmap.pdf", width = 25, height = 25)
+        hmap
 }
 
-# heatmap of the difference between two score matrices
-scores_diff_heatmap <- function(mtx1,mtx2)
+##
+# Plots a heatmap of the difference in comprehension scores cs(a,b) for every
+# combination of events a and b as determined from the reduced and unreduced
+# probabilities.
+##
+comprh_scores_diff_heatmap <- function()
 {
-        mtx <- mtx1 - mtx2
-        df.sm <- melt(mtx)
+        df.sm <- df
+
+        df.sm$Pr <- df.sm$Pr_unreduced
+        mtx.unreduced = comprh_scores_matrix(df.sm)
+        df.sm$Pr <- df.sm$Pr_reduced
+        mtx.reduced = comprh_scores_matrix(df.sm)
+
+        mtx.difference <- mtx.unreduced - mtx.reduced
+        df.sm <- melt(mtx.difference)
 
         hmap <- ggplot(df.sm, aes(X1, X2))
         hmap <- hmap + geom_tile(aes(fill = value))
-        #hmap <- hmap + scale_fill_gradient(low = "darkslategray", high = "deeppink", limits = c(-1,1))
         hmap <- hmap + scale_fill_gradient2(low = "firebrick1", mid="white", high="chartreuse3", limits = c(-2,2))
         hmap <- hmap + ggtitle("Difference in comprehension scores")
         hmap <- hmap + xlab("Atomic event a")
         hmap <- hmap + ylab("Atomic event b")
         hmap <- hmap + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-        #hmap <- hmap + coord_cartesian(ylim = c(0, dims))
 
-        # for Japan ...
-        hmap <- hmap + theme_update(axis.title = element_text(size = 20))
-        hmap <- hmap + theme_update(axis.text = element_text(size = 20))
-        hmap <- hmap + theme_update(title = element_text(size = 20))
-        hmap <- hmap + theme_update(legend.key.size = unit(50, "pt"))
-        hmap <- hmap + theme_update(legend.title = element_text(size = 20))
-        hmap <- hmap + theme_update(legend.text = element_text(size = 20))
-        
         quartz()
-        print(hmap)
-
-        ggsave("~/Desktop/comp_hmap.pdf", width = 25, height = 25)
+        hmap
 }
 
-scores_as_table <- function(event)
-{
-        dfc <- df[df$Type == "cond",]
-
-        dfc$A <- sapply(strsplit(as.character(dfc$Item),"\\|"),"[",1)
-        dfc$B <- sapply(strsplit(as.character(dfc$Item),"\\|"),"[",2)
-
-        #dfc_Ab <- dfc[dfc$A == event & substr(dfc$B,1,4) != "not(",] # (event|B)
-        #dfc_aB <- dfc[dfc$B == event,]                               # (A|event)
-        dfc_Ab <- dfc[dfc$A == event & dfc$B != event & substr(dfc$B,1,4) != "not(",] # (event|B)
-        dfc_aB <- dfc[dfc$B == event & dfc$A != event,]                               # (A|event)
-
-        # compute the comprehension scores
-        for (i in 1 : nrow(dfc_Ab)) {
-                dfc_Ab$Comp_score[i] = cscore(dfc_Ab$Pr[i], df[df$Item == dfc_Ab$A[i],]$Pr[1])
-                dfc_aB$Comp_score[i] = cscore(dfc_aB$Pr[i], df[df$Item == dfc_aB$A[i],]$Pr[1])
-        }
-
-        cat("\n")
-
-        cat(paste("Events understood from", event, "\n", sep=" "))
-        print(dfc_aB[,c("A","B","Comp_score")])
-        cat("\n")
-
-        cat(paste("Events that lead to understanding", event, "\n", sep = " "))
-        print(dfc_Ab[,c("A","B","Comp_score")])
-        cat("\n")
-}
+###########################################################################
+###########################################################################
 
 ##
 # This computes the comprehension score (Frank et al., 2009), which is 
@@ -391,128 +286,42 @@ scores_as_table <- function(event)
 # Frank, S. L., Haselager, W. F. G, & van Rooij, I. (2009). Connectionist
 #     semantic systematicity. Cognition, 110, 358-379.
 ##
-cscore <- function(az, a)
+comprh_score <- function(az, a)
 {
-        #if (a == 0) {
-        #        return(0)
-        #}
+        score <- 0
+
         if (az > a) {
                 score <- (az - a) / (1.0 - a)
         } else {
                 score <- (az - a) / a
         }
+
         return(score)
 }
 
-###########################################################################
-###########################################################################
-
 ##
-# This plots surprisal estimates to answer two questions:
-#
-# 1) From what events Y do we understand event X? (X|Y)
-#
-# 2) What events Y do we understand from event X? (Y|X)
+# Constructs a matrix of comprehension scores cs(a,b) for every
+# combination of events a and b.
 ##
-surprisal <- function(event)
+comprh_scores_matrix <- function(df)
 {
-        dfc <- df[df$Type == "cond",]
+        tbl.prior <- data.table(df[df$Type == "prior",])
+        setkey(tbl.prior, Item)
+        tbl.cond <- data.table(df[df$Type == "cond",])
+        setkey(tbl.cond, Item)
 
-        dfc$A <- sapply(strsplit(as.character(dfc$Item),"\\|"),"[",1)
-        dfc$B <- sapply(strsplit(as.character(dfc$Item),"\\|"),"[",2)
-
-        dfc_Ab <- dfc[dfc$A == event & substr(dfc$B,1,4) != "not(",] # (event|B)
-        dfc_aB <- dfc[dfc$B == event,]                               # (A|event)
-
-        # compute the surprisal estimates
-        for (i in 1 : nrow(dfc_Ab)) {
-                dfc_Ab$Surprisal[i] = -log(dfc_Ab$Pr[i])
-                dfc_aB$Surprisal[i] = -log(dfc_aB$Pr[i])
-        }
+        items <- as.character(factor(df[df$Type == "prior" & substr(df$Item, 1, 4) != "not(",]$Item))
         
-        # max surprisal lower than upper limit
-        ul <- max(dfc_Ab[dfc_Ab$Surprisal != Inf,]$Surprisal,dfc_aB[dfc_aB$Surprisal != Inf,]$Surprisal) + 0.5
-
-        # plot of from what events Y we understand event X
-        gbp_Ab <- ggplot(dfc_Ab, aes(x = B, y = Surprisal, fill = Surprisal))
-        gbp_Ab <- gbp_Ab + geom_bar(stat = "identity", position = "dodge")
-        gbp_Ab <- gbp_Ab + scale_fill_gradient(low = "deeppink1", high = "pink1", limits = c(0,ul))
-        gbp_Ab <- gbp_Ab + guides(fill = FALSE)
-        gbp_Ab <- gbp_Ab + ggtitle(paste(paste("Surprisal of", event, sep = " "), "given 'Event b'", sep = " "))
-        gbp_Ab <- gbp_Ab + xlab("Event b")
-        gbp_Ab <- gbp_Ab + ylab("Surprisal estimates")
-        gbp_Ab <- gbp_Ab + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-        gbp_Ab <- gbp_Ab + coord_cartesian(ylim = c(0, ul))
-
-        # plot of what events Y we understand from event X
-        gbp_aB <- ggplot(dfc_aB, aes(x = A, y = Surprisal, fill = Surprisal))
-        gbp_aB <- gbp_aB + geom_bar(stat = "identity", position = "dodge")
-        gbp_aB <- gbp_aB + scale_fill_gradient(low = "deeppink1", high = "pink1", limits = c(0,ul))
-        gbp_aB <- gbp_aB + guides(fill = FALSE)
-        gbp_aB <- gbp_aB + ggtitle(paste("Surprisal of 'Event a' given", event, sep = " "))
-        gbp_aB <- gbp_aB + xlab("Event a")
-        gbp_aB <- gbp_aB + ylab("Surprisal estimates")
-        gbp_aB <- gbp_aB + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-        gbp_aB <- gbp_aB + coord_cartesian(ylim = c(0, ul)) 
-
-        quartz()
-        #grid.arrange(gbp_Ab, gbp_aB, nrow=2, top=paste("Surprisal estimates for", event))
-        grid.arrange(gbp_aB, gbp_Ab, nrow = 2, top = paste("Surprisal estimates for", event))
-}
-
-# matrix of surprisal estimates
-surprisal_matrix <- function()
-{
-        dfc <- df[df$Type == "cond",]
-        tbl.dfc <- data.table(dfc)
-        setkey(tbl.dfc, Item)
-
-        items <- as.character(factor(df[df$Type == "prior" & substr(df$Item,1,4) != "not(",]$Item))
-
+        cat("Computing comprehension scores matrix ...\n", file = stderr())
         mtx <- matrix(nrow = length(items), ncol = length(items), dimnames = list(items, items))
-
-        cat("Computing surprisal matrix ...\n", file = stderr())
         for (a in 1 : length(items)) {
                 cat(paste(a, ":", items[a], "\n"))
+                prior_a <- tbl.prior[items[a],]$Pr
                 for (b in 1 : length(items)) {
-                        cond_ab <- tbl.dfc[paste(items[a], "|" , items[b], sep=""),]$Pr
-                        mtx[a,b] <- -log(cond_ab)
+                        cond_ab <- tbl.cond[paste(items[a], "|" , items[b], sep=""),]$Pr
+                        mtx[a,b] <- comprh_score(cond_ab, prior_a)
                 }
         }
 
         mtx
-}
-
-# heatmap of suprisal estimates
-surprisal_heatmap <- function(mtx)
-{
-        df.sm <- melt(mtx)
-        str(df.sm)
-
-        # Max surprisal lower than upper limit
-        ul <- max(df.sm[df.sm$value != Inf,]$value) + 1
-        df.sm[df.sm$value == Inf,]$value <- ul
-
-        hmap <- ggplot(df.sm, aes(X1, X2))
-        hmap <- hmap + geom_tile(aes(fill = value))
-        hmap <- hmap + scale_fill_gradient2(low = "white", high = "deeppink", limits = c(0,ul))
-        #hmap <- hmap + scale_fill_gradient2(low = "firebrick1", mid="white", high="chartreuse3", limits = c(-1,1))
-        hmap <- hmap + ggtitle("Surprisal estimates")
-        hmap <- hmap + xlab("Atomic event a")
-        hmap <- hmap + ylab("Atomic event b")
-        hmap <- hmap + theme_update(axis.text.x = element_text(angle = 90, hjust = 1))
-        #hmap <- hmap + coord_cartesian(ylim = c(0, dims))
-
-        # for Japan ...
-        hmap <- hmap + theme_update(axis.title = element_text(size = 20))
-        hmap <- hmap + theme_update(axis.text = element_text(size = 20))
-        hmap <- hmap + theme_update(title = element_text(size = 20))
-        hmap <- hmap + theme_update(legend.key.size = unit(50, "pt"))
-        hmap <- hmap + theme_update(legend.title = element_text(size = 20))
-        hmap <- hmap + theme_update(legend.text = element_text(size = 20))
-
-        quartz()
-        print(hmap)
-
-        ggsave("~/Desktop/surprisal_hmap.pdf", width = 25, height = 25)
 }
