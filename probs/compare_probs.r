@@ -22,6 +22,21 @@
 # limitations under the License.
 ##
 
+## REQUIRES:
+##
+## model: path to a DSS model.
+##
+## COMPUTES:
+##
+## (1) The similarity of comprehension scores derived from reduced and
+##     unreduced situation vectors, and whether they these scores encode the 
+##     same hard constraints.
+##
+## (2) Correlations of the prior, conjunction, and conditional probabilities
+##     as derived from the reduced and unreduced vectors.
+
+require(lattice)
+
 ###########################################################################
 ###########################################################################
 
@@ -35,90 +50,136 @@ if (!exists("model_fb")) {
 ###########################################################################
 ###########################################################################
 
-obs_file <- paste(model_fb, ".observations", sep = "")
-vec_file <- paste(model_fb, ".vectors", sep ="")
+file.obs   <- paste(model_fb, ".observations",  sep = "")
+file.vecs  <- paste(model_fb, ".vectors",       sep = "")
+file.probs <- paste(model_fb, ".probabilities", sep = "")
 
 # read observations and vectors
 cat("Reading observations ...\n", file = stderr())
-df.obs <- read.csv(obs_file, sep = " ", head = TRUE, check.names = FALSE)
+mtx.obs <- as.matrix(read.csv(file.obs,  sep = " ", head = TRUE, check.names = FALSE))
 cat("Reading vectors ...\n", file = stderr())
-df.vec <- read.csv(vec_file, sep = " ", head = TRUE, check.names = FALSE)
+mtx.vec <- as.matrix(read.csv(file.vecs, sep = " ", head = TRUE, check.names = FALSE))
 
-# transpose data frame, and convert to matrix
-mtx.obs <- as.matrix(df.obs)
-mtx.vec <- as.matrix(df.vec)
+# read probablities
+df.probs <- read.csv(file.probs, head = TRUE)
 
-# equal hard constraints
+df.prior <- df.probs[df.probs$Type == "prior",]
+df.conj  <- df.probs[df.probs$Type == "conj",]
+df.cond  <- df.probs[df.probs$Type == "cond",]
+
+###########################################################################
+###########################################################################
+
+##
+# Returns TRUE if comprehension vectors cv1 and cv2 have extreme comprehension
+# values (1 or -1) in the exact same positions.
+##
 equal_hard_constraints <- function(cv1, cv2)
 {
         all(replace(cv1, cv1 > -1 & cv1 < 1, 0) == replace(cv2, cv2 > -1 & cv2 < 1, 0))
 }
 
-# returns similarity between two vectors
-similarity <- function(v1, v2)
+##
+# Construct a vector of comprehension scores cs(a,b) for each combination of
+# events a and b.
+##
+comprh_vector <- function(mtx) 
 {
-        cor(v1, v2)
-}
-
-# returns a vector of comprehension scores
-comprehension_vector <- function(mtx) 
-{
-        cv <- c()
-        
+        cv <- c()  
         for (i in 1 : ncol(mtx)) {
                 for (j in 1 : ncol(mtx)) {
-                        cv <- c(cv, comprehension_score(mtx[,i], mtx[,j]))
+                        cv <- c(cv, comprh_score(mtx[,i], mtx[,j]))
                 }
         }
-
         cv
 }
 
-# prior probability
-prior_prob <- function(a)
+##
+# Computes the prior probability of a situation vector v.
+##
+prior_prob <- function(v)
 {
-        sum(a) / length(a)
+        sum(v) / length(v)
 }
 
-# conjunction probability
-conj_prob <- function(a, b)
+##
+# Computes the conjuction probability of v1 and v2. In case v1 and v2 are
+# identical, the conjunction probability is their prior probability.
+##
+conj_prob <- function(v1, v2)
 {
-        if (all(a == b)) {
-                return(prior_prob(a))
+        pr.conj <- 0
+        if (all(v1 == v2)) {
+                pr.conj <- prior_prob(v1)
         } else {
-                return(sum(a * b) / length(a))
+                pr.conj <- sum(v1 * v2) / length(v1)
         }
+        pr.conj
 }
 
-# conditional probability
-cond_prob <- function(a, b)
+##
+# Computes the conditional probablity of v1 given v2.
+##
+cond_prob <- function(v1, v2)
 {
-        conj_prob(a, b) / prior_prob(b)
+        conj_prob(v1, v2) / prior_prob(v2)
 }
 
-# comprehension score
-comprehension_score <- function(a, b)
+##
+# Computes the comprehension scores cs(v1,v2).
+##
+comprh_score <- function(v1, v2)
 {
-        pr_ab <- cond_prob(a, b)
-        pr_a <- prior_prob(a)
+        pr.cond  <- cond_prob(v1, v2)
+        pr.prior <- prior_prob(v1)
 
-        if (pr_ab > pr_a) {
-                cs <- (pr_ab - pr_a) / (1.0 - pr_a)
+        cs <- 0
+        if (pr.cond > pr.prior) {
+                cs <- (pr.cond - pr.prior) / (1.0 - pr.prior)
         } else {
-                cs <- (pr_ab - pr_a) / pr_a
+                cs <- (pr.cond - pr.prior) / pr.prior
         }
 
         cs
 }
 
+###########################################################################
+###########################################################################
+
 # compute comprehension vectors
 cat("Computing comprehension vector (observations) ...\n", file = stderr())
-cv.obs <- comprehension_vector(mtx.obs)
+cv.obs <- comprh_vector(mtx.obs)
 cat("Computing comprehension vector (vectors) ...\n", file = stderr())
-cv.vec <- comprehension_vector(mtx.vec)
+cv.vec <- comprh_vector(mtx.vec)
 
-# output comparison
-ecs <- equal_hard_constraints(cv.obs, cv.vec)
-cat(paste("\nAll hard constraints equal: ", ecs, "\n", sep = ""), file = stderr())
-sim <- similarity(cv.obs, cv.vec)
-cat(paste("Similarity: ", sim, "\n", sep = ""), file= stderr())
+# report comparison of comprehension vectors
+cat(paste("\nSimilarity: ", cor(cv.obs, cv.vec), "\n", sep = ""), file= stderr())
+cat(paste("\nAll hard constraints equal: ", equal_hard_constraints(cv.obs, cv.vec),
+        "\n", sep = ""), file = stderr())
+
+# scatterplots prior probabilities
+quartz()
+print(xyplot(df.prior$Pr_reduced ~ df.prior$Pr_unreduced,
+        main = paste("r =", signif(cor(df.prior$Pr_reduced, df.prior$Pr_unreduced), 3)),
+        xlab = expression(paste("Unreduced ", tau, "(b)")),
+        ylab = expression(paste("Reduced", tau, "(b)"))))
+cat(paste("\ncor(priors): ", cor(df.prior$Pr_reduced, df.prior$Pr_unreduced),
+        "\n", sep = ""), file= stderr())
+
+# scatterplots conjunction probabilities
+quartz()
+print(xyplot(df.conj$Pr_reduced ~ df.conj$Pr_unreduced,
+        main = paste("r =", signif(cor(df.conj$Pr_reduced, df.conj$Pr_unreduced), 3)),
+        xlab = expression(paste("Unreduced ", tau, "(a&b)")),
+        ylab = expression(paste("Reduced", tau, "(a&b)"))))
+cat(paste("\ncor(conj):  ", cor(df.conj$Pr_reduced, df.conj$Pr_unreduced),
+        "\n", sep = ""), file= stderr())
+
+# scatterplots conditional probabilities
+quartz()
+print(xyplot(df.cond$Pr_reduced ~ df.cond$Pr_unreduced,
+        main = paste("r =", signif(cor(df.cond$Pr_reduced, df.cond$Pr_unreduced), 3)),
+        xlab = expression(paste("Unreduced ", tau, "(a|b)")),
+        ylab = expression(paste("Reduced", tau, "(a|b)"))))
+cat(paste("\ncor(cond):  ", cor(df.cond$Pr_reduced, df.cond$Pr_unreduced),
+        "\n", sep = ""), file= stderr())
