@@ -22,6 +22,15 @@
 # limitations under the License.
 ##
 
+## REQUIRES:
+##
+## model: path to a DSS model.
+##
+## COMPUTES:
+##
+## The prior, conjunction, and conditional probabilities for the reduced
+## and unreduced vectors .
+
 require(data.table)
 
 ###########################################################################
@@ -37,26 +46,29 @@ if (!exists("model_fb")) {
 ###########################################################################
 ###########################################################################
 
-obs_file <- paste(model_fb, ".observations", sep = "")
-vec_file <- paste(model_fb, ".vectors", sep = "")
-out_file <- paste(model_fb, ".probabilities", sep = "")
+file.obs   <- paste(model_fb, ".observations",  sep = "")
+file.vec   <- paste(model_fb, ".vectors",       sep = "")
+file.probs <- paste(model_fb, ".probabilities", sep = "")
 
 # read observations and vectors
 cat("Reading observations ...\n", file = stderr())
-df.obs <- read.csv(obs_file, sep = " ", head = TRUE, check.names = FALSE)
+df.obs <- read.csv(file.obs, sep = " ", head = TRUE, check.names = FALSE)
 cat("Reading vectors ...\n", file = stderr())
-df.vec <- read.csv(vec_file, sep = " ", head = TRUE, check.names = FALSE)
+df.vec <- read.csv(file.vec, sep = " ", head = TRUE, check.names = FALSE)
 
 # number of events
 n.events <- length(colnames(df.obs))
 
-# add negation probabilities
+# add negated events
 for (e in names(df.obs)) {
         df.obs[,paste("not(", e, ")", sep = "")] <- (1 - df.obs[,e])
         df.vec[,paste("not(", e, ")", sep = "")] <- (1 - df.vec[,e])
 }
 
-# compute priors
+###########################################################################
+####               P R I O R   P R O B A B I L I T I E S               ####
+###########################################################################
+
 cat("Computing prior probabilities ...\n", file = stderr())
 df.prior <- data.frame(
         Type         = rep("prior", 2 * n.events),
@@ -71,17 +83,18 @@ for (e in names(df.obs)) {
         df.prior[n,]$Pr_reduced   <- (1 / nrow(df.vec)) * sum(df.vec[,e])
 }
 
-# convert prior data frame to table
+###########################################################################
+####         C O N J U N C T I O N   P R O B A B I L I T I E S         ####
+###########################################################################
+
+cat("Computing conjunction probabilities ...\n", file = stderr())
 tbl.prior <- data.table(df.prior)
 setkey(tbl.prior, Item)
-
-# compute conjunction probabilities
-cat("Computing conjunction probabilities ...\n", file = stderr())
 df.conj <- data.frame(
         Type         = rep("conj", 2 * n.events * n.events),
-        Item         = rep(NA, 2 * n.events * n.events),
-        Pr_unreduced = rep(NA, 2 * n.events * n.events),
-        Pr_reduced   = rep(NA, 2 * n.events * n.events))
+        Item         = rep(NA,     2 * n.events * n.events),
+        Pr_unreduced = rep(NA,     2 * n.events * n.events),
+        Pr_reduced   = rep(NA,     2 * n.events * n.events))
 n <- 0
 for (e2 in names(df.obs)) {
         for (e1 in names(df.obs)) {
@@ -101,17 +114,18 @@ for (e2 in names(df.obs)) {
         }
 }
 
-# convert conjunction data frame to table
+###########################################################################
+####         C O N D I T I O N A L   P R O B A B I L I T I E S         ####
+###########################################################################
+
+cat("Computing conditional probabilities ...\n", file = stderr())
 tbl.conj <- data.table(df.conj)
 setkey(tbl.conj, Item)
-
-# compute conditional probabilities
-cat("Computing conditional probabilities ...\n", file = stderr())
 df.cond <- data.frame(
         Type         = rep("cond", 2 * n.events * n.events),
-        Item         = rep(NA, 2 * n.events * n.events),
-        Pr_unreduced = rep(0, 2 * n.events * n.events),
-        Pr_reduced   = rep(0, 2 * n.events * n.events))
+        Item         = rep(NA,     2 * n.events * n.events),
+        Pr_unreduced = rep(NA,     2 * n.events * n.events),
+        Pr_reduced   = rep(NA,     2 * n.events * n.events))
 n <- 0
 for (e2 in names(df.obs)) {
         prior_unreduced <- tbl.prior[e2,]$Pr_unreduced
@@ -131,6 +145,9 @@ for (e2 in names(df.obs)) {
         }
 }
 
+###########################################################################
+###########################################################################
+
 # merge data frames
 df <- data.frame()
 df <- rbind(df, df.prior)
@@ -139,4 +156,4 @@ df <- rbind(df, df.cond)
 
 # write data frame
 cat("Writing probabilities ...\n", file = stderr())
-write.csv(df, file = out_file, quote = TRUE, row.names = FALSE)
+write.csv(df, file = file.probs, quote = TRUE, row.names = FALSE)

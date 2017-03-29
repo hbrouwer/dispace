@@ -51,14 +51,14 @@ if (!exists("model_fb")) {
 ###########################################################################
 
 file.obs   <- paste(model_fb, ".observations",  sep = "")
-file.vecs  <- paste(model_fb, ".vectors",       sep = "")
+file.vec   <- paste(model_fb, ".vectors",       sep = "")
 file.probs <- paste(model_fb, ".probabilities", sep = "")
 
 # read observations and vectors
 cat("Reading observations ...\n", file = stderr())
-mtx.obs <- as.matrix(read.csv(file.obs,  sep = " ", head = TRUE, check.names = FALSE))
+mtx.obs <- as.matrix(read.csv(file.obs, sep = " ", head = TRUE, check.names = FALSE))
 cat("Reading vectors ...\n", file = stderr())
-mtx.vec <- as.matrix(read.csv(file.vecs, sep = " ", head = TRUE, check.names = FALSE))
+mtx.vec <- as.matrix(read.csv(file.vec, sep = " ", head = TRUE, check.names = FALSE))
 
 # read probablities
 df.probs <- read.csv(file.probs, head = TRUE)
