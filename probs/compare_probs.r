@@ -163,7 +163,7 @@ quartz()
 print(xyplot(df.prior$Pr_reduced ~ df.prior$Pr_unreduced,
         main = paste("r =", signif(cor(df.prior$Pr_reduced, df.prior$Pr_unreduced), 3)),
         xlab = expression(paste("Unreduced ", tau, "(b)")),
-        ylab = expression(paste("Reduced", tau, "(b)"))))
+        ylab = expression(paste("Reduced ", tau, "(b)"))))
 cat(paste("\ncor(priors): ", cor(df.prior$Pr_reduced, df.prior$Pr_unreduced),
         "\n", sep = ""), file= stderr())
 
@@ -172,7 +172,7 @@ quartz()
 print(xyplot(df.conj$Pr_reduced ~ df.conj$Pr_unreduced,
         main = paste("r =", signif(cor(df.conj$Pr_reduced, df.conj$Pr_unreduced), 3)),
         xlab = expression(paste("Unreduced ", tau, "(a&b)")),
-        ylab = expression(paste("Reduced", tau, "(a&b)"))))
+        ylab = expression(paste("Reduced ", tau, "(a&b)"))))
 cat(paste("\ncor(conj):  ", cor(df.conj$Pr_reduced, df.conj$Pr_unreduced),
         "\n", sep = ""), file= stderr())
 
@@ -181,6 +181,6 @@ quartz()
 print(xyplot(df.cond$Pr_reduced ~ df.cond$Pr_unreduced,
         main = paste("r =", signif(cor(df.cond$Pr_reduced, df.cond$Pr_unreduced), 3)),
         xlab = expression(paste("Unreduced ", tau, "(a|b)")),
-        ylab = expression(paste("Reduced", tau, "(a|b)"))))
+        ylab = expression(paste("Reduced ", tau, "(a|b)"))))
 cat(paste("\ncor(cond):  ", cor(df.cond$Pr_reduced, df.cond$Pr_unreduced),
         "\n", sep = ""), file= stderr())
