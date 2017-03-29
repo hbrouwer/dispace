@@ -22,6 +22,10 @@
 # limitations under the License.
 ##
 
+## COMPUTES:
+##
+## A 2D and 3D visualization of the comprehension score.
+
 require(car)
 require(rgl)
 
@@ -45,30 +49,33 @@ require(rgl)
 # Frank, S. L., Haselager, W. F. G, & van Rooij, I. (2009). Connectionist
 #     semantic systematicity. Cognition, 110, 358-379.
 ##
-cscore <- function(az, a)
+comprh_score <- function(az, a)
 {
+        score <- 0
+
         if (az > a) {
                 score <- (az - a) / (1.0 - a)
         } else {
                 score <- (az - a) / a
         }
+
         return(score)
 }
 
-# construct data frame
+###########################################################################
+###########################################################################
+
+# compute comprehension scores for a range of az an a values.
 df <- data.frame()
 for (az in seq(0, 1, 0.05)) {
         for (a in seq(0, 1, 0.05)) {
-                cs <- cscore(az, a)
+                cs <- comprh_score(az, a)
                 df <- rbind(df, data.frame(az = az, a = a, cs = cs))
         }
 }
 
-
-# less fine-grained
-#df <- df[(df$a == 0 | df$a == .25 | df$a == .5 | df$a == .75 | df$a == 1.0),]
-
-# 2d scatterplot
+# 2D scatterplot
+quartz()
 scatterplot(df$cs ~ df$az | df$a,
         ylab          = "comprehension(a,b)",
         xlab          = "B(a|b)",
@@ -77,7 +84,7 @@ scatterplot(df$cs ~ df$az | df$a,
         legend.title  = "B(a)",
         legend.coords = "topleft")
 
-# 3d scatterplot
+# 3D scatterplot
 scatter3d(df$cs ~ df$az + df$a,
         fit           = "smooth",
         xlab          = "B(a|b)",
@@ -88,7 +95,8 @@ scatter3d(df$cs ~ df$az + df$a,
         surface.alpha = 0.35,
         surface.col   = "lightblue",
         point.col     = "darkgray")
-rgl.quads(c(0.0, 0.0, 1.0, 1.0),
+rgl.quads(
+        c(0.0, 0.0, 1.0, 1.0),
         c(0.5, 0.5, 0.5, 0.5),
         c(0.0, 1.0, 1.0, 0.0),
         color        = c("yellow"),

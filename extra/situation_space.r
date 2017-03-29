@@ -22,6 +22,14 @@
 # limitations under the License.
 ##
 
+## REQUIRES:
+##
+## model: path to a DSS model.
+##
+## COMPUTES:
+##
+## A heatmap showing the Distributed Situation-state Space.
+
 require(gdata)
 require(ggplot2)
 require(reshape)
@@ -39,11 +47,14 @@ if (!exists("model_fb")) {
 ###########################################################################
 ###########################################################################
 
-vec_file <- paste(model_fb, ".vectors", sep = "")
+file.vec <- paste(model_fb, ".vectors", sep = "")
 
 # read vectors
 cat("Reading vectors ...\n", file = stderr())
-df.vec <- read.csv(vec_file, sep = " ", head = TRUE, check.names = FALSE)
+df.vec <- read.csv(file.vec, sep = " ", head = TRUE, check.names = FALSE)
+
+###########################################################################
+###########################################################################
 
 # dimensions and columns
 dims <- nrow(df.vec)
@@ -56,7 +67,6 @@ df.vec$dimension <- rep(seq(1, dims, 1), cols)
 # heatmap
 hmap <- ggplot(df.vec, aes(variable, dimension))
 hmap <- hmap + geom_tile(aes(fill = value))
-#hmap <- hmap + scale_fill_gradient(low = "red", high = "blue", limits = c(0,1))
 hmap <- hmap + scale_fill_gradient(low = "white", high = "darkred", limits = c(0,1))
 hmap <- hmap + ggtitle("Situation space")
 hmap <- hmap + xlab("Atomic event")

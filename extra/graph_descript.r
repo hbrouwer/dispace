@@ -22,6 +22,8 @@
 # limitations under the License.
 ##
 
+## Note: This is alpha code, and requires polishing.
+
 require(visNetwork)
 require(igraph)
 

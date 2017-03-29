@@ -70,9 +70,10 @@ if (!exists("model_reduced"))
 ###########################################################################
 ###########################################################################
 
+cat("Reading probabilities ...\n", file = stderr())
 df <- read.csv(paste(model_fb, ".probabilities", sep = ""), head = TRUE)
 
-# Probabilities from unreduced or reduced vectors
+# probabilities from unreduced or reduced vectors
 if (!model_reduced) {
         df$Pr <- df$Pr_unreduced
 } else {

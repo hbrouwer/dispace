@@ -22,6 +22,24 @@
 # limitations under the License.
 ##
 
+## REQUIRES:
+##
+## model: path to a DSS model.
+##
+## DEFINES:
+##
+## reduce(dims, epochs, alpha, alpha_sf, beta, beta_sf, write): reduces
+##      the dimensionality of a DSS using a Competitive Layer algorihm.
+##
+##      dims:           desired number of dimensions;
+##      epochs:         number of training epochs;
+##      alpha:          learning parameter for weights;
+##      alpha_sf:       epochwise scaling factor for alpha;
+##      beta:           learning parameter for biases;
+##      beta_sf:        epochwise scaling factor for beta;
+##      write:          boolean flagging whether reduced vectors should;
+##                      be saved (TRUE) or not (FALSE).
+
 ###########################################################################
 ###########################################################################
 
@@ -35,14 +53,12 @@ if (!exists("model_fb")) {
 ###########################################################################
 ###########################################################################
 
-obs_file <- paste(model_fb, ".observations", sep = "")
+file.obs <- paste(model_fb, ".observations", sep = "")
+file.vec <- paste(model_fb, ".vectors",      sep = "")
 
-# read observations and vectors
+# read observations
 cat("Reading observations ...\n", file = stderr())
-df.obs <- read.csv(obs_file, sep = " ", head = TRUE, check.names = FALSE)
-
-# convert data frame to matrix
-df.mtx <- as.matrix(df.obs)
+df.mtx <- as.matrix(read.csv(file.obs, sep = " ", head = TRUE, check.names = FALSE))
 
 ###########################################################################
 ####                C O M P E T I T I V E   L A Y E R                  ####
@@ -67,7 +83,7 @@ df.mtx <- as.matrix(df.obs)
 # obsveration Sk:
 #
 # (1) For each unit i, the cityblock distance is determined between the
-# weight vector assigned to unit i, and observation Sk:
+#     weight vector assigned to unit i, and observation Sk:
 #
 #          dist(u_i,Sk) = sum_a|u_i(a) - Sk(a)|
 #
@@ -95,37 +111,67 @@ df.mtx <- as.matrix(df.obs)
 #
 # Frank, S. L., Haselager, W. F. G., and van Rooij, I. (2009). Connectionist
 #     semantic systematicity. Cognition, 110(3):358–379.
+#
+# Note: in the present implementation, alpha and beta are scaled after each
+#     training epoch
 ##
-reduce <- function(dims, epochs = 20, alpha = 0.1, alpha_sf = 0.1,
-        beta = 0.00008, beta_sf = 0.1, write = FALSE)
+reduce <- function(
+        dims     = 150,
+        epochs   = 20,
+        alpha    = 0.1, 
+        alpha_sf = 0.1,
+        beta     = 0.00008,
+        beta_sf  = 0.1,
+        write    = FALSE)
 {
         biases  <- rep(1.0, dims)
         weights <- matrix(rep(0.5, dims * ncol(df.mtx)), dims, ncol(df.mtx))
 
         epoch <- 1
         while (epoch <= epochs) {
-                cat(paste("Epoch:", epoch, "Alpha:", alpha,
-                        "AlphaSF:", alpha_sf, "Beta:", beta,"BetaSF:", beta_sf), file = stderr())
-                cat("\n")
+                cat(paste(
+                        "Epoch:",   epoch, 
+                        "Alpha:",   alpha,
+                        "AlphaSF:", alpha_sf,
+                        "Beta:",    beta,
+                        "BetaSF:",  beta_sf, 
+                        "\n"),
+                        file = stderr())
 
                 for (i in 1 : nrow(df.mtx)) {
                         dv <- c()
-                        for (j in 1 : nrow(weights)) {
-                                ## (1): dist(u_i,Sk) = sum_a|u_i(a) - Sk(a)|
-                                dv <- c(dv, sum(abs(df.mtx[i,] - weights[j,]) - biases[j]))
 
-                                ## (2): w = argmin_i(dist(u_i,Sk) - b_i)
-                                w  <- which.min(dv)
+                        # (1): For each unit i, the cityblock distance is 
+                        # determined between the weight vector assigned to
+                        # unit i, and observation Sk:
+                        #
+                        #     dist(u_i,Sk) = sum_a|u_i(a) - Sk(a)|
+                        for (j in 1 : nrow(weights))
+                                dv <- c(dv, sum(abs(df.mtx[i,] - weights[j,])))
 
-                                ## (3): Du_w = alpha * (Sk - u_w)
-                                weights[w,] <- weights[w,] + alpha * (df.mtx[w,] - weights[w,])
+                        # (2): The unit w with the shortest, biased distance
+                        # to Sk(a) is determined:
+                        #
+                        #    w = argmin_i(dist(u_i,Sk) - b_i)
+                        w <- which.min(dv - biases)
 
-                                ## (4): Db_w = beta * b_w(1 - b_w)
-                                biases[w]  <- min(1, biases[w] + beta  * biases[w] * (1 - biases[w]))
+                        # (3): The weight vector of unit w (the winner) is 
+                        # updated:
+                        #
+                        #     Du_w = alpha * (Sk - u_w)
+                        weights[w,] <- weights[w,] + alpha * (df.mtx[w,] - weights[w,])
 
-                                ## (5): Db_i = beta * b_i
-                                biases[-w] <- biases[-w] + beta * biases[-w]
-                        }
+                        # (4): The bias of unit w (the winner) is decreased 
+                        # (to a minimum of 1):
+                        #
+                        #     Db_w = beta * b_w(1 - b_w)
+                        biases[w] <- biases[w] + beta * biases[w] * (1 - biases[w])
+
+                        # (5): The biases of all other units (i != w; the
+                        # losers) are increased:
+                        #
+                        #     Db_i = beta * b_i
+                        biases[-w] <- biases[-w] + beta * biases[-w]
                 }
 
                 epoch <- epoch + 1;
@@ -137,11 +183,10 @@ reduce <- function(dims, epochs = 20, alpha = 0.1, alpha_sf = 0.1,
 
         # write weights (if required)
         if (write) {
-                vec_file <- paste(model_fb, ".vectors", sep = "")
-                cat(paste("Wrote:", vec_file, "\n"), file = stderr())
                 colnames(weights) <- colnames(df.mtx)
-                write.table(weights, vec_file, quote = FALSE, sep = " ",
+                write.table(weights, file.vec, quote = FALSE, sep = " ",
                         col.names = TRUE, row.names = FALSE)
+                cat(paste("Wrote:", file.vec, "\n"), file = stderr())
         }
 
         weights

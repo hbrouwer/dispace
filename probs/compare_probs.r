@@ -61,6 +61,7 @@ cat("Reading vectors ...\n", file = stderr())
 mtx.vec <- as.matrix(read.csv(file.vec, sep = " ", head = TRUE, check.names = FALSE))
 
 # read probablities
+cat("Reading probabilities ...\n", file = stderr())
 df.probs <- read.csv(file.probs, head = TRUE)
 
 df.prior <- df.probs[df.probs$Type == "prior",]
