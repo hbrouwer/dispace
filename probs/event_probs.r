@@ -27,7 +27,7 @@
 ## model: path to a DSS model.
 ##
 ## model_reduced: boolean flagging whether reduced probabilities should be
-##      used (TRUE) or not (FALSE). 
+##      used (TRUE) or not (FALSE).
 ##
 ## DEFINES:
 ##

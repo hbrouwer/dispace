@@ -26,6 +26,9 @@
 ##
 ## model: path to a DSS model.
 ##
+## model_reduced: boolean flagging whether a reduced space should be
+##      used (TRUE) or not (FALSE).
+##
 ## COMPUTES:
 ##
 ## A heatmap showing the Distributed Situation-state Space.
@@ -43,29 +46,36 @@ if (!exists("model_fb")) {
         model_nm <- tail(strsplit(model, "/")[[1]], 1)
         model_fb <- paste(model, model_nm, sep = "/")
 }
+if (!exists("model_reduced"))
+        stop("'model_reduced' not set")
 
 ###########################################################################
 ###########################################################################
 
-file.vec <- paste(model_fb, ".vectors", sep = "")
+file.obs <- paste(model_fb, ".observations", sep = "")
+file.vec <- paste(model_fb, ".vectors",      sep = "")
 
-# read vectors
-cat("Reading vectors ...\n", file = stderr())
-df.vec <- read.csv(file.vec, sep = " ", head = TRUE, check.names = FALSE)
+if (!model_reduced) {
+        cat("Reading observations ...\n", file = stderr())
+        df <- read.csv(file.obs, sep = " ", head = TRUE, check.names = FALSE)
+} else {
+        cat("Reading vectors ...\n", file = stderr())
+        df <- read.csv(file.vec, sep = " ", head = TRUE, check.names = FALSE)
+}
 
 ###########################################################################
 ###########################################################################
 
 # dimensions and columns
-dims <- nrow(df.vec)
-cols <- ncol(df.vec)
+dims <- nrow(df)
+cols <- ncol(df)
 
 # reshape
-df.vec <- melt(df.vec)
-df.vec$dimension <- rep(seq(1, dims, 1), cols)
+df <- melt(df)
+df$dimension <- rep(seq(1, dims, 1), cols)
 
 # heatmap
-hmap <- ggplot(df.vec, aes(variable, dimension))
+hmap <- ggplot(df, aes(variable, dimension))
 hmap <- hmap + geom_tile(aes(fill = value))
 hmap <- hmap + scale_fill_gradient(low = "white", high = "darkred", limits = c(0,1))
 hmap <- hmap + ggtitle("Situation space")
