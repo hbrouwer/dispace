@@ -1,53 +1,3 @@
-```                                    
-   ,--.,--.
- ,-|  |`--' ,---.  ,---.  ,--,--. ,---. ,---.
-' .-. |,--.(  .-' | .-. |' ,-.  || .--'| .-. :
-\ `-' ||  |.-'  `)| '-' '\ '-'  |\ `--.\   --.
- `---' `--'`----' |  |-'  `--`--' `---' `----'
-                  `--'
-    "To wander, to roam, move about."
-```
-
-## Introduction
-
-Implementation of the Distributed Situation-state Space (DSS) Model [1,2],
-which offers framework for neural semantics [3]. **dispace** implements
-machinery for constructing DSSs, as well as for generating sentences that
-map into DSS semantics. As such, we distinguish between two parts of a DSS
-model:
-
-1. **World**: The definition of atomic propositions and their
-   (probabilistic) co-occurrence constraints, from which the DSS is derived;
-
-2. **Grammar**: The definition of a grammar that produces sentences
-   describing situations in the world implemented by the DSS.
-
-## Defining a DSS model
-
-A DSS model is specified in a single Prolog file that uses the **dispace**
-module and defines four predicates: **event/1**, **violation/1**,
-**probability/3**, **sentence/4**. The first three predicates define the
-**World** part of the DSS model:
-
-1. **event(-Event)**: Specifies an atomic proposition *Event*;
-
-2. **violation(+StateOfAffairs)**: Returns *True* if *StateOfAffairs* contains
-   a violation of world knowledge and *False* otherwise;
-
-3. **probability(+Event,+StateOfAffairs,-Probability)**: Returns the
-   *Probability* of *Event* given the *StateOfAffairs*;
-
-The fourth predictate defines the **Grammar** part:
-
-4. **sentence(?Set,?Semantics,?Sentence,[])** (Note: this is a DCG rule!):
-   Returns each full *Sentence* with its associated *Semantics* for a given
-   *Set* of sentences.
-
-The following template [[template.pl]()]
-
- provides a minimal example of the above:
-
-```prolog
 %%
 %    ,--.,--.
 %  ,-|  |`--' ,---.  ,---.  ,--,--. ,---. ,---.
@@ -118,18 +68,3 @@ probability(_,_,0.5). % <-- coin flip
 %  Returns the Semantics for Sentence (or vice versa).
 
 sentence('set',Sem) --> [], { Sem = [] }.
-```
-
-## References
-
-[1] Frank, S. L., Koppen, M., Noordman, L. G. M., and Vonk, W. (2003).
-Modeling knowledge-based inferences in story comprehension. *Cognitive
-Science 27*(6), pp. 785-910.
-
-[2] Frank, S. L., Haselager, W. F. G., and van Rooij, I. (2009).
-Connectionist semantic systematicity. *Cognition 110*(3), pp. 358-379.
-
-[3] Brouwer, H., Crocker, M. W., and Venhuizen N. J. (2017). Neural
-Semantics. In: Wieling, M., Kroon, M., van Noord, G. J. M., and Bouma, G.
-(eds.), *From Semantics to Dialectometry: Festschrift for John Nerbonne*,
-pp. 75-83. College Publications.
