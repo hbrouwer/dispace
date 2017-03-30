@@ -10,10 +10,10 @@
 
 ## Introduction
 
-Implementation of the Distributed Situation-state Space (DSS) Model [1,2],
+Implementation of the Distributed Situation-state Space (DSS) model [1,2],
 which offers framework for neural semantics [3]. **dispace** implements
 machinery for constructing DSSs, as well as for generating sentences that
-map into DSS semantics. As such, we distinguish between two parts of a DSS
+map into DSS vectors. As such, we distinguish between two parts of a DSS
 model:
 
 1. **World**: The definition of atomic propositions and their
