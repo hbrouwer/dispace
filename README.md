@@ -16,11 +16,11 @@ machinery for constructing DSSs, as well as for generating sentences that
 map into DSS vectors. As such, we distinguish between two parts of a DSS
 model:
 
-1. **World**: The definition of atomic propositions and their
-   (probabilistic) co-occurrence constraints, from which the DSS is derived;
+1. **World**: definition of atomic propositions and their (probabilistic)
+   co-occurrence constraints, from which the DSS is derived;
 
-2. **Grammar**: The definition of a grammar that produces sentences
-   describing situations in the world implemented by the DSS.
+2. **Grammar**: definition of a grammar that produces sentences describing
+   situations in the world implemented by the DSS.
 
 ## Defining a DSS model
 
@@ -49,6 +49,8 @@ provides a minimal example of the above:
 
 ```prolog
 %%
+% template.pl
+%
 %    ,--.,--.
 %  ,-|  |`--' ,---.  ,---.  ,--,--. ,---. ,---.
 % ' .-. |,--.(  .-' | .-. |' ,-.  || .--'| .-. :
