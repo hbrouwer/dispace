@@ -29,23 +29,23 @@ module and defines four predicates: **event/1**, **violation/1**,
 **probability/3**, **sentence/4**. The first three predicates define the
 **World** part of the DSS model:
 
-1. **event(-Event)**: Specifies an atomic proposition *Event*;
+1. **event(-Event)**: specifies an atomic proposition *Event*;
 
-2. **violation(+StateOfAffairs)**: Returns *True* if *StateOfAffairs* contains
+2. **violation(+StateOfAffairs)**: returns *True* if *StateOfAffairs* contains
    a violation of world knowledge and *False* otherwise;
 
-3. **probability(+Event,+StateOfAffairs,-Probability)**: Returns the
+3. **probability(+Event,+StateOfAffairs,-Probability)**: returns the
    *Probability* of *Event* given the *StateOfAffairs*;
 
 The fourth predictate defines the **Grammar** part:
 
-4. **sentence(?Set,?Semantics,?Sentence,[])** (Note: this is a DCG rule!):
-   Returns each full *Sentence* with its associated *Semantics* for a given
+4. **sentence(?Set,?Semantics,?Sentence,[])** *(note: this is a DCG rule!)*:
+   returns each full *Sentence* with its associated *Semantics* for a given
    *Set* of sentences.
 
-The following template [[template.pl]()]
-
- provides a minimal example of the above:
+The following template
+[[template.pl](https://github.com/hbrouwer/dispace/blob/master/worlds/template.pl)]
+provides a minimal example of the above:
 
 ```prolog
 %%
