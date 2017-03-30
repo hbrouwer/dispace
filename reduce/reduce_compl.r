@@ -131,10 +131,10 @@ reduce <- function(
         while (epoch <= epochs) {
                 cat(paste(
                         "Epoch:",   epoch, 
-                        "Alpha:",   alpha,
-                        "AlphaSF:", alpha_sf,
-                        "Beta:",    beta,
-                        "BetaSF:",  beta_sf, 
+                        "\tAlpha:",   round(alpha,    3),
+                        "\tAlphaSF:", round(alpha_sf, 3),
+                        "\tBeta:",    round(beta,     3),
+                        "\tBetaSF:",  round(beta_sf,  3), 
                         "\n"),
                         file = stderr())
 
@@ -147,7 +147,7 @@ reduce <- function(
                         #
                         #     dist(u_i,Sk) = sum_a|u_i(a) - Sk(a)|
                         for (j in 1 : nrow(weights))
-                                dv <- c(dv, sum(abs(df.mtx[i,] - weights[j,])))
+                                dv <- c(dv, sum(abs(weights[j,] - df.mtx[i,])))
 
                         # (2): The unit w with the shortest, biased distance
                         # to Sk(a) is determined:
@@ -159,7 +159,7 @@ reduce <- function(
                         # updated:
                         #
                         #     Du_w = alpha * (Sk - u_w)
-                        weights[w,] <- weights[w,] + alpha * (df.mtx[w,] - weights[w,])
+                        weights[w,] <- weights[w,] + alpha * (df.mtx[i,] - weights[w,])
 
                         # (4): The bias of unit w (the winner) is decreased 
                         # (to a minimum of 1):
