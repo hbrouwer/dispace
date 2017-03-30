@@ -133,10 +133,10 @@ reduce <- function(
         while (epoch <= epochs) {
                 cat(paste(
                         "Epoch:",   epoch, 
-                        "\tAlpha:",   round(alpha,    3),
-                        "\tAlphaSF:", round(alpha_sf, 3),
-                        "\tBeta:",    round(beta,     3),
-                        "\tBetaSF:",  round(beta_sf,  3), 
+                        "\tAlpha:",   signif(alpha,    3),
+                        "\tAlphaSF:", signif(alpha_sf, 3),
+                        "\tBeta:",    signif(beta,     3),
+                        "\tBetaSF:",  signif(beta_sf,  3), 
                         "\n"),
                         file = stderr())
 
