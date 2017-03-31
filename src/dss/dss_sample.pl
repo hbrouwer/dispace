@@ -42,7 +42,7 @@
 %  Returns the basic events in the microworld.
 
 dss_basic_events(Events) :-
-        findall(Event,world:event(Event),Events).
+        findall(Event,event(Event),Events).
 
 %% dss_sample_observation(-StateVector)
 %
@@ -69,7 +69,7 @@ dss_sample_observations(NumSamples,StateMatrix) :-
 dss_sample_observations_(NumSamples,NumSamples,[]) :- !.
 dss_sample_observations_(NumSamples,Sample,[StateVector|StateVectors]) :-
         Sample < NumSamples,
-        dss_sample_situation(StateVector),
+        dss_sample_observation(StateVector),
         dss_model:dss_state_of_affairs(StateVector,StateOfAffairs),
         Sample0 is Sample + 1,
         format('Sample ~d: ',Sample0),
@@ -155,10 +155,10 @@ infer_event_states_([(Event,_)|Undecided0],Undecided1,Undecided3,Decided0,Decide
 % event_inference_tuple(+Decided0,Decided1,StateTuple)
 
 event_inference_tuple(Decided0,Decided1,(State0,State1)) :-
-        (  world:violation(Decided0)
+        (  violation(Decided0)
         -> State0 = 0
         ;  State0 = 1 ),
-        (  world:violation(Decided1)
+        (  violation(Decided1)
         -> State1 = 0
         ;  State1 = 1 ).
 
