@@ -82,13 +82,13 @@ dss_sample_observations_(NumSamples,Sample,[StateVector|StateVectors]) :-
 
 % initial_state_vector(+Events,-StateVector)
 
-initial_state_vector([],[]).
+initial_state_vector([],[]) :- !.
 initial_state_vector([Event|Events],[(Event,0.5)|Tuples]) :-
         initial_state_vector(Events,Tuples).
 
 % order_events(+OrderedUndecided,+UnorderedDecided,-OrderedDecided)
 
-order_events([],[],[]).
+order_events([],[],[]) :- !.
 order_events([(Event0,_)|Events0],Events1,[(Event0,State)|Events3]) :-
         select((Event0,State),Events1,Events2),
         order_events(Events0,Events2,Events3).
