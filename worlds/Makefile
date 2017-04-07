@@ -39,7 +39,7 @@ model_fb = $(model)/$(model)
 num_samples = 25000
 
 ##
-# samples:
+# observations:
 #
 # This goal generates a DSS model, consisting of a set of sampled
 # observations. The result is a directory with the file:
