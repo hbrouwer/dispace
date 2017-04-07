@@ -290,20 +290,6 @@ Sen = [charlie, plays],
 StateVector = [0.3945041986665515, 0.9999999999999996, 0.7040893616840458, 0.999999999999997, 0.7990321130183982, 0.980883741469724, 0.979273134279705, 0.9997652085445852, 0.9999969452155467|...]
 ```
 
-Also, we can generate statistics about a sentence set:
-
-```Prolog
-?- gen_dss_vector_stats(train,'frank_model/frank_model.vectors').
-
-Number of sentence-DSS pairs: 13556
-Number of unique DSS vectors: 4322
-Number of unique FOL formulas: 5105
-Number of lawful sentence-DSS pairs: 13280
-Number of unlawful sentence-DSS pairs: 276
-
-true.
-```
-
 #### Automated sentence generation
 
 Obviously, one ideally wants to automate the generation of sentences and
