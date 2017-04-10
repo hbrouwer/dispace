@@ -35,9 +35,6 @@
 
 :- reexport(dss_sample).
 
-%:- use_module(library(clpfd)).
-%:- use_module(library(readutil)).
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%      D I S T R I B U T E D   S I T U A T I O N   S P A C E        %%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
