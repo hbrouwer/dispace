@@ -108,7 +108,6 @@ average_eds_([item(S,TS,FR)|Items],F,AccS,AvgS,AccTS,AvgTS,AccFR,AvgFR) :-
         AccS0  is AccS  + (1 / F) * S,
         AccTS0 is AccTS + (1 / F) * TS,
         AccFR0 is AccFR + (1 / F) * FR,
-        write(AccS0), nl,
         average_eds_(Items,F,AccS0,AvgS,AccTS0,AvgTS,AccFR0,AvgFR).
 
 %% parse_esds(+DOM,-ESDs)
