@@ -65,11 +65,12 @@ dss_state_of_affairs([(Event,1)|Tuples],[Event|Events]) :-
 dss_state_of_affairs([(_,_)|Tuples],Events) :-
         dss_state_of_affairs(Tuples,Events).
 
-%% dss_read_vectors(+File)
+%% dss_read_vectors(+File,-StateMatrix)
 
 dss_read_vectors(File,StateMatrix) :-
         open(File,read,Stream),
         read_events(Stream,Events),
+        write(Events), nl,
         read_state_vectors(Stream,Events,StateMatrix),
         close(Stream).
 
