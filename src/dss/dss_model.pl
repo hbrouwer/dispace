@@ -70,7 +70,6 @@ dss_state_of_affairs([(_,_)|Tuples],Events) :-
 dss_read_vectors(File,StateMatrix) :-
         open(File,read,Stream),
         read_events(Stream,Events),
-        write(Events), nl,
         read_state_vectors(Stream,Events,StateMatrix),
         close(Stream).
 
