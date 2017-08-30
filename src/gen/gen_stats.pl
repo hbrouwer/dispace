@@ -92,18 +92,19 @@ gen_structure_stats_([Struct|Structs],Set,[(Struct,ExSen,ExSem,NumTokens,NumType
 
 gen_dss_vector_stats(Set,SamplesFile) :-
         dss_read_vectors(SamplesFile,StateMatrix),
-        findall((Sen,Sem,Hash,Lawful),(
-                sentence(Set,Sem,Sen,[]),
-                dss_semantics:dss_semantics_vector(Sem,StateMatrix,Vec),
-                unit_vector_to_code_vector(Vec,CodeVec),
-                %md5_hash(CodeVec,Hash,[]),
-                sha_hash(CodeVec,Hash,[algorithm(sha256)]),
-                %sha_hash(CodeVec,Hash,[algorithm(sha512)]),
-                (  dss_semantics:dss_lawful_vector(Vec)
-                -> write('V '), Lawful = true
-                ;  write('X '), Lawful = false
-                ),
-                write(Sen),write(' => '),write(Hash),nl),Quads),
+        findall((Sen,Sem,Hash,Lawful),
+                ( sentence(Set,Sem,Sen,[]),
+                  dss_semantics:dss_semantics_vector(Sem,StateMatrix,Vec),
+                  unit_vector_to_code_vector(Vec,CodeVec),
+                  %md5_hash(CodeVec,Hash,[]),
+                  sha_hash(CodeVec,Hash,[algorithm(sha256)]),
+                  %sha_hash(CodeVec,Hash,[algorithm(sha512)]),
+                  (  dss_semantics:dss_lawful_vector(Vec)
+                  -> write('V '), Lawful = true
+                  ;  write('X '), Lawful = false
+                  ),
+                  write(Sen),write(' => '),write(Hash),nl ),
+                Quads),
         length(Quads,NumQuads),
         format('~nNumber of sentence-DSS pairs: ~d~n',[NumQuads]),
         setof(Hash,Sen^Sem^Lawful^member((Sen,Sem,Hash,Lawful),Quads),UniqueVecs),
