@@ -424,10 +424,6 @@ vp(leave,N,_,Sem)    --> ['left'],
 % Adapted from dss_semantics_event/4
 semantics_event(Pred,[S],Os,Sem0) :-
         !, semantics_event_(Pred,S,Os,Sem0).
-semantics_event(Pred,[S|Ss],Os,or(Sem0,Sem1)) :-
-        semantics_event_(Pred,S,Os,Sem0),
+semantics_event(Pred,[S|Ss],Os,or(Event,Sem1)) :-
+        Event =.. [Pred,S|Os],
         semantics_event(Pred,Ss,Os,Sem1).
-
-semantics_event_(Pred,S,O,Event1) :-
-        !, Event0 =.. [Pred,S|O],
-        Event1 =.. [event,Event0].

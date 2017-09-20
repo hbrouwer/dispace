@@ -41,8 +41,6 @@
 %  Transforms a first-order logic Formula into a DSS SemanticsVector, on the
 %  basis of the vectors in StateMatrix.
 
-dss_semantics_vector(event(Event),StateMatrix,Vector) :-
-        !, dss_event_vector(Event,StateMatrix,Vector).
 dss_semantics_vector(not(Formula),StateMatrix,Vector1) :-
         !, dss_semantics_vector(Formula,StateMatrix,Vector0),
         dss_fuzzy_logic:dss_fuzzy_not(Vector0,Vector1).
@@ -62,6 +60,8 @@ dss_semantics_vector(imp(Formula0,Formula1),StateMatrix,Vector2) :-
         !, dss_semantics_vector(Formula0,StateMatrix,Vector0),
         dss_semantics_vector(Formula1,StateMatrix,Vector1),
         dss_fuzzy_logic:dss_fuzzy_imp(Vector0,Vector1,Vector2).
+dss_semantics_vector(Event,StateMatrix,Vector) :-
+        dss_event_vector(Event,StateMatrix,Vector).
 
 %% dss_lawful_vector/1
 %
@@ -79,27 +79,27 @@ dss_lawful_vector([_|Units]) :-
 %
 %  Formats a first-order logic formula for pretty printing.
 
-dss_format_formula(event(Event),Atom) :-
-        format(atom(Atom),'~w',[Event]).
 dss_format_formula(not(Formula),Atom1) :-
-        dss_format_formula(Formula,Atom0),
+        !, dss_format_formula(Formula,Atom0),
         format(atom(Atom1),'!(~w)',[Atom0]).
 dss_format_formula(and(Formula0,Formula1),Atom2) :-
-        dss_format_formula(Formula0,Atom0),
+        !, dss_format_formula(Formula0,Atom0),
         dss_format_formula(Formula1,Atom1),
         format(atom(Atom2),'(~w & ~w)',[Atom0,Atom1]).
 dss_format_formula(or(Formula0,Formula1),Atom2) :-
-        dss_format_formula(Formula0,Atom0),
+        !, dss_format_formula(Formula0,Atom0),
         dss_format_formula(Formula1,Atom1),
         format(atom(Atom2),'(~w | ~w)',[Atom0,Atom1]).
 dss_format_formula(xor(Formula0,Formula1),Atom2) :-
-        dss_format_formula(Formula0,Atom0),
+        !, dss_format_formula(Formula0,Atom0),
         dss_format_formula(Formula1,Atom1),
         format(atom(Atom2),'(~w || ~w)',[Atom0,Atom1]).
 dss_format_formula(imp(Formula0,Formula1),Atom2) :-
-        dss_format_formula(Formula0,Atom0),
+        !, dss_format_formula(Formula0,Atom0),
         dss_format_formula(Formula1,Atom1),
         format(atom(Atom2),'(~w -> ~w)',[Atom0,Atom1]).
+dss_format_formula(Event,Atom) :-
+        format(atom(Atom),'~w',[Event]).
 
 %% dss_semantics_event(+Predicate,+FirstArguments,SecondArguments,-Formula)
 %
@@ -107,7 +107,7 @@ dss_format_formula(imp(Formula0,Formula1),Atom2) :-
 %  with each combination of FirstArguments and SecondArguments.
 %
 %  e.g., dss_semantics_event(ex,[a,b],[c],Formula).
-%  Formula = or(event(ex(a, c)), event(ex(b, c))).
+%  Formula = or(ex(a, c), ex(b, c)).
 
 dss_semantics_event(Pred,[X],Ys,Sem0) :-
         !, dss_semantics_event_(Pred,X,Ys,Sem0).
@@ -115,15 +115,12 @@ dss_semantics_event(Pred,[X|Xs],Ys,or(Sem0,Sem1)) :-
         dss_semantics_event_(Pred,X,Ys,Sem0),
         dss_semantics_event(Pred,Xs,Ys,Sem1).
 
-dss_semantics_event_(Pred,X,[],Event1) :-
-        !, Event0 =.. [Pred,X],
-        Event1 =.. [event,Event0].
-dss_semantics_event_(Pred,X,[Y],Event1) :-
-        !, Event0 =.. [Pred,X,Y],
-        Event1 =.. [event,Event0].
-dss_semantics_event_(Pred,X,[Y|Ys],or(Event1,Sem)) :-
-        Event0 =.. [Pred,X,Y],
-        Event1 =.. [event,Event0],
+dss_semantics_event_(Pred,X,[],Event) :-
+        !, Event =.. [Pred,X].
+dss_semantics_event_(Pred,X,[Y],Event) :-
+        !, Event =.. [Pred,X,Y].
+dss_semantics_event_(Pred,X,[Y|Ys],or(Event,Sem)) :-
+        Event =.. [Pred,X,Y],
         dss_semantics_event_(Pred,X,Ys,Sem).
 
 %% dss_coordinate_disjuncts(+Formula0,+Formula1,-Formula2)
@@ -178,12 +175,13 @@ equal_partitioning(or(Arg1,or(Arg2,Arg3)),or(Arg4,or(Arg5,Arg6))) :-
         extract_operator(Arg5,Op4),
         extract_operator(Arg6,Op4).
 
-extract_operator(event(_),event).
+% extract_operator(event(_),event).
 extract_operator(not(_),not).
 extract_operator(and(_,_),and).
 extract_operator(or(_,_),or).
 extract_operator(xor(_,_),xor).
 extract_operator(imp(_,_),imp).
+extract_operator(_,event).
 
 %% dss_embed_in_event(+Predicates,+Event,-EmbeddedEvents)
 %
