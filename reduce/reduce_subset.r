@@ -108,7 +108,7 @@ reduce <- function(dims, epochs, write = FALSE)
 
                 # (3): Compute the similarity between X and X' on the basis of
                 # the comprehension scores in X and X';
-                trial.sim <- cor(cv, comprh_vector(trial.mtx))
+                trial.sim <- cor(cv, trial.cv)
                 cat(paste("\tSim:", trial.sim), file = stderr())
 
                 # (4): If X' is the best approximation of X so far, store it;
