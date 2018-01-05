@@ -126,20 +126,13 @@ reduce <- function(
         beta_sf  = 0.1,
         write    = FALSE)
 {
+        cv <- comprh_vector(df.mtx)
+
         biases  <- rep(1.0, dims)
         weights <- matrix(rep(0.5, dims * ncol(df.mtx)), dims, ncol(df.mtx))
 
         epoch <- 1
         while (epoch <= epochs) {
-                cat(paste(
-                        "Epoch:",   epoch, 
-                        "\tAlpha:",   signif(alpha,    3),
-                        "\tAlphaSF:", signif(alpha_sf, 3),
-                        "\tBeta:",    signif(beta,     3),
-                        "\tBetaSF:",  signif(beta_sf,  3), 
-                        "\n"),
-                        file = stderr())
-
                 for (i in 1 : nrow(df.mtx)) {
                         dv <- c()
 
@@ -176,11 +169,24 @@ reduce <- function(
                         biases[-w] <- biases[-w] + beta * biases[-w]
                 }
 
-                epoch <- epoch + 1;
+                weights.cv  <- comprh_vector(weights)
+                weights.sim <- cor(cv, weights.cv)
+
+                cat(paste(
+                        "Epoch:",   epoch, 
+                        "\tAlpha:",   signif(alpha,       3),
+                        "\tAlphaSF:", signif(alpha_sf,    3),
+                        "\tBeta:",    signif(beta,        3),
+                        "\tBetaSF:",  signif(beta_sf,     3),
+                        "\tSim:",     signif(weights.sim, 3),
+                        "\n"),
+                        file = stderr())
 
                 # scale alpha and beta
                 alpha <- alpha - alpha_sf * alpha;
                 beta  <- beta  - beta_sf  * beta;
+
+                epoch <- epoch + 1;
         }
 
         # write weights (if required)
@@ -192,4 +198,68 @@ reduce <- function(
         }
 
         weights
+}
+
+##
+# Construct a vector of comprehension scores cs(a,b) for each combination of
+# events a and b.
+##
+comprh_vector <- function(mtx) 
+{
+        cv <- c()  
+        for (i in 1 : ncol(mtx)) {
+                for (j in 1 : ncol(mtx)) {
+                        cv <- c(cv, comprh_score(mtx[,i], mtx[,j]))
+                }
+        }
+        cv
+}
+
+##
+# Computes the prior probability of a situation vector v.
+##
+prior_prob <- function(v)
+{
+        sum(v) / length(v)
+}
+
+##
+# Computes the conjuction probability of v1 and v2. In case v1 and v2 are
+# identical, the conjunction probability is their prior probability.
+##
+conj_prob <- function(v1, v2)
+{
+        pr.conj <- 0
+        if (all(v1 == v2)) {
+                pr.conj <- prior_prob(v1)
+        } else {
+                pr.conj <- sum(v1 * v2) / length(v1)
+        }
+        pr.conj
+}
+
+##
+# Computes the conditional probablity of v1 given v2.
+##
+cond_prob <- function(v1, v2)
+{
+        conj_prob(v1, v2) / prior_prob(v2)
+}
+
+##
+# Computes the comprehension scores cs(v1,v2).
+##
+comprh_score <- function(v1, v2)
+{
+        pr.cond  <- cond_prob(v1, v2)
+        pr.prior <- prior_prob(v1)
+
+        cs <- 0
+        if (pr.cond > pr.prior) {
+                cs <- (pr.cond - pr.prior) / (1.0 - pr.prior)
+        } else {
+                cs <- (pr.cond - pr.prior) / pr.prior
+        }
+
+        cs
 }
