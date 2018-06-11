@@ -67,14 +67,14 @@ df.mtx <- as.matrix(read.csv(file.obs, sep = " ", head = TRUE, check.names = FAL
 # sampling. The following procedure is repeated for "epochs" epochs to
 # arrive at an k x n matrix X' (where k < m) that maximally reflects the
 # knowledge encoded in the original matrix X:
-# 
+#
 # (1) Take a subset of k rows of matrix X, and call it X';
 #
-# (2) Check if all columns of matrix X' are informative, and if the reduced 
-#     matrix encodes the same hard constraints as the unreduced matrix,
-#     otherwise skip to the next epoch;
+# (2) Check if all columns of matrix X' are informative, and if the reduced
+#     matrix encodes the same hard constraints (if enforced) as the
+#     unreduced matrix, otherwise skip to the next epoch;
 #
-# (3) Compute the similarity between X and X' on the basis of the 
+# (3) Compute the similarity between X and X' on the basis of the
 #     comprehension scores in X and X';
 #
 # (4) If X' is the best approximation of X so far, store it;
@@ -83,7 +83,12 @@ df.mtx <- as.matrix(read.csv(file.obs, sep = " ", head = TRUE, check.names = FAL
 #
 # (6) If we have reached "epochs", return the best X' found.
 ##
-reduce <- function(dims, epochs, write = FALSE)
+reduce <- function(
+        dims,
+        epochs,
+        enforce_pos_inferences = TRUE,
+        enforce_neg_inferences = TRUE,
+        write = FALSE)
 {
         cv <- comprh_vector(df.mtx)
 
@@ -99,9 +104,12 @@ reduce <- function(dims, epochs, write = FALSE)
                 trial.cv  <- comprh_vector(trial.mtx)
 
                 # (2): Check if all columns of matrix X' are informative, and
-                # if the reduced matrix encodes the same hard constraints as 
-                # the unreduced matrix;
-                if (!all_informative_vectors(trial.mtx) | !equal_hard_constraints(cv, trial.cv)) {
+                # if the reduced matrix encodes the same hard constraints
+                # (if enforced) as the unreduced matrix, otherwise skip to
+                # the next epoch;
+                if (!all_informative_vectors(trial.mtx) 
+                    | (enforce_pos_inferences && !equal_positive_inferences(cv, trial.cv))
+                    | (enforce_neg_inferences && !equal_negative_inferences(cv, trial.cv))) {
                         cat("\tBad sample ... Skipping epoch!\n", file = stderr())
                         next
                 }
@@ -148,12 +156,21 @@ all_informative_vectors <- function(mtx)
 }
 
 ##
-# Returns TRUE if comprehension vectors cv1 and cv2 have extreme comprehension
-# values (1 or -1) in the exact same positions.
+# Returns TRUE if comprehension vectors cv1 and cv2 have extreme positive 
+# comprehension values (+1) in the exact same positions.
 ##
-equal_hard_constraints <- function(cv1, cv2)
+equal_positive_inferences <- function(cv1, cv2)
 {
-        all(replace(cv1, cv1 > -1 & cv1 < 1, 0) == replace(cv2, cv2 > -1 & cv2 < 1, 0))
+        all(replace(cv1, cv1 < 1, 0) == replace(cv2, cv2 < 1, 0))
+}
+
+##
+# Returns TRUE if comprehension vectors cv1 and cv2 have extreme negative 
+# comprehension values (+1) in the exact same positions.
+##
+equal_negative_inferences <- function(cv1, cv2)
+{
+        all(replace(cv1, cv1 > -1, 0) == replace(cv2, cv2 > -1, 0))
 }
 
 ##
