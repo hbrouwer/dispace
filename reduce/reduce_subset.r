@@ -101,15 +101,18 @@ reduce <- function(
                 
                 # (1): Take a subset of k rows of matrix X, and call it X';
                 trial.mtx <- df.mtx[sample(1 : nrow(df.mtx), dims, replace = FALSE),]
-                trial.cv  <- comprh_vector(trial.mtx)
 
                 # (2): Check if all columns of matrix X' are informative, and
                 # if the reduced matrix encodes the same hard constraints
                 # (if enforced) as the unreduced matrix, otherwise skip to
                 # the next epoch;
-                if (!all_informative_vectors(trial.mtx) 
-                    | (enforce_pos_inferences && !equal_positive_inferences(cv, trial.cv))
-                    | (enforce_neg_inferences && !equal_negative_inferences(cv, trial.cv))) {
+                if (!all_informative_vectors(trial.mtx)) {
+                        cat("\tBad sample ... Skipping epoch!\n", file = stderr())
+                        next
+                }
+                trial.cv  <- comprh_vector(trial.mtx)
+                if ( (enforce_pos_inferences && !equal_positive_inferences(cv, trial.cv))
+                   | (enforce_neg_inferences && !equal_negative_inferences(cv, trial.cv)) ) {
                         cat("\tBad sample ... Skipping epoch!\n", file = stderr())
                         next
                 }
