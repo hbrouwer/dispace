@@ -54,7 +54,7 @@
 require(ggplot2)
 require(grid)
 require(gridExtra)
-require(reshape)
+require(reshape2)
 require(data.table)
 
 ###########################################################################
@@ -228,7 +228,7 @@ comprh_scores_heatmap <- function()
 {
         df.sm <- melt(comprh_scores_matrix(df))
 
-        hmap <- ggplot(df.sm, aes(X1, X2))
+        hmap <- ggplot(df.sm, aes(Var1, Var2))
         hmap <- hmap + geom_tile(aes(fill = value))
         hmap <- hmap + scale_fill_gradient2(low = "firebrick1", mid="white", high="chartreuse3", limits = c(-1,1))
         hmap <- hmap + ggtitle("Comprehension scores")
@@ -257,7 +257,7 @@ comprh_scores_diff_heatmap <- function()
         mtx.difference <- mtx.unreduced - mtx.reduced
         df.sm <- melt(mtx.difference)
 
-        hmap <- ggplot(df.sm, aes(X1, X2))
+        hmap <- ggplot(df.sm, aes(Var1, Var2))
         hmap <- hmap + geom_tile(aes(fill = value))
         hmap <- hmap + scale_fill_gradient2(low = "firebrick1", mid="white", high="chartreuse3", limits = c(-2,2))
         hmap <- hmap + ggtitle("Difference in comprehension scores")

@@ -39,7 +39,7 @@
 ## surprisal_values_heatmap(): plots a heatmap of the surprisal values S(a,b)
 ##      for every combination of events a and b.
 
-require(reshape)
+require(reshape2)
 require(data.table)
 
 ###########################################################################
@@ -133,7 +133,7 @@ surprisal_values_heatmap <- function()
         if (Inf %in% df.sm$value)
                 df.sm[df.sm$value == Inf,]$value <- ub
 
-        hmap <- ggplot(df.sm, aes(X1, X2))
+        hmap <- ggplot(df.sm, aes(Var1, Var2))
         hmap <- hmap + geom_tile(aes(fill = value))
         hmap <- hmap + scale_fill_gradient2(low = "white", high = "deeppink", limits = c(0, ub))
         hmap <- hmap + ggtitle("Surprisal estimates")
