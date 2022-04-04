@@ -1,8 +1,8 @@
 %%
 % restaurant.pl
 %
-% Copyright 2016 Noorje Venhuizen <njvenhuizen@gmail.com> 
-%                Harm Brouwer <me@hbrouwer.eu>
+% Copyright 2016 Noortje Venhuizen <njvenhuizen@gmail.com> 
+%     and Harm Brouwer <me@hbrouwer.eu>
 %
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
