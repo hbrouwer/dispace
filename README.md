@@ -8,6 +8,11 @@
     "To wander, to roam, move about."
 ```
 
+**Note:**  This is an implementation of the Distributed Situation-state
+Space (DSS) model [1,2], as used in [4]. For a recent model-theoretic
+reformulation of this approach in terms of Distributional Formal Semantics
+(DFS) [5], see [DFS Tools](https://github.com/hbrouwer/dfs-tools).
+
 # Introduction
 
 **dispace** is an implementation of the Distributed Situation-state Space
@@ -319,6 +324,10 @@ Semantics. In: Wieling, M., Kroon, M., van Noord, G. J. M., and Bouma, G.
 (eds.), *From Semantics to Dialectometry: Festschrift for John Nerbonne*,
 pp. 75-83. College Publications.
 
-[4] Venhuizen, N. J., Crocker, M. W., and Brouwer, H. (submitted).
-Expectation-based Comprehension: The interaction of world knowledge and
-linguistic experience. *Manuscript submitted.*
+[4] Venhuizen, N. J., Crocker, M. W., and Brouwer, H. (2019).
+Expectation-based Comprehension: Modeling the Interaction of World Knowledge
+and Linguistic Experience. *Discourse Processes, 56*:3, 229-255.
+
+[5] Venhuizen, N. J., Hendriks, P., Crocker, M. W., and Brouwer, H. (in
+press). Distributional Formal Semantics. *Information and Computation*.
+arXiv preprint arXiv:2103.01713
