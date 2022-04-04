@@ -1,6 +1,5 @@
-
 %%
-% frank-world.pl
+% frank_world.pl
 %
 % Copyright 2014-2017 Harm Brouwer <me@hbrouwer.eu>
 %     and Noortje Venhuizen <njvenhuizen@gmail.com> 
