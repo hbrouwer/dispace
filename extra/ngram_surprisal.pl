@@ -24,19 +24,19 @@
 % limitations under the License.
 %%
 
-:- consult('contrasts_rn.pl').
+% path to world specification containing sentence/4 definitions.
+:- consult('../worlds/restaurant.pl').
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%                    N G R A M   S U R P R I S A L                  %%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% write_surprisal_values(+NgramSize,+File)
+% write_surprisal_values(+NgramSize,+TrainSet,+TestSet,+File)
 
-write_surprisal_values(N,File) :-
-        ngrams(N,train,Ngrams),
-        findall((Set,Sen,Sem,Surprisal),(
-                sentence(Set,Sem,Sen,[]),
-                Set \= train,
+write_surprisal_values(N,TrainSet,TestSet,File) :-
+        ngrams(N,TrainSet,Ngrams),
+        findall((TestSet,Sen,Sem,Surprisal),(
+                sentence(TestSet,Sem,Sen,[]),
                 surprisal(Sen,Ngrams,Surprisal)),Quads),
         open(File,write,Stream),
         format(Stream,'Cond,Sen,Sem,N,Surprisal~n',[]),
