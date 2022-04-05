@@ -27,6 +27,16 @@
 :- use_module(library(sgml)).
 :- use_module(library(xpath)).
 
+%%
+% This implements machinery for parsing the DeSript (Describing Script
+% Structure) corpus. For more information on DeScript, see:
+%
+% Wanzare, L. D. Zarcone, A., Thater, S., and Pinkal, M. (2016). DeScript:
+% A crowdsourced database of event sequence descriptions for the acquisition
+% of high-quality script knowledge. In: Proceedings of the Tenth
+% International Conference on Language Resources and Evaluation (LREC'16).
+%%
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%            P A R S I N G   D E S C R I P T   D A T A              %%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
