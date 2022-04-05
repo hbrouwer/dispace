@@ -24,12 +24,11 @@
 # limitations under the License.
 ##
 
-## Note: This is alpha code, and requires polishing.
-
 require(visNetwork)
 require(igraph)
 
-edges <- read.csv("/Users/harm/Desktop/EventGraphs/edges.csv", head = TRUE)
+# path to a CSV containing DeScript edges
+edges <- read.csv("edges.csv", head = TRUE)
 edges$from <- as.character(edges$from)
 edges$to   <- as.character(edges$to)
 
