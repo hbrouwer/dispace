@@ -424,13 +424,13 @@ vp(order,N,D,Sem)    --> ['ordered'], np(drink,D),
 vp(order,N,F,Sem)    --> ['ordered'], np(food,F),
         {semantics_event(order,[N],[F],Sem) }.
 
-vp(eat,N,F,Sem)    --> ['ate'], np(food,F),
+vp(eat,N,F,Sem)      --> ['ate'], np(food,F),
         {semantics_event(eat,[N],[F],Sem) }.
 
 vp(drink,N,D,Sem)    --> ['drank'], np(drink,D),
         {semantics_event(drink,[N],[D],Sem) }.
 
-vp(pay,N,_,Sem)    --> ['paid'],
+vp(pay,N,_,Sem)      --> ['paid'],
         {semantics_event(pay,[N],[],Sem) }.
 
 vp(leave,N,_,Sem)    --> ['left'],
@@ -445,7 +445,5 @@ semantics_event(Pred,[S|Ss],Os,or(Sem0,Sem1)) :-
         semantics_event_(Pred,S,Os,Sem0),
         semantics_event(Pred,Ss,Os,Sem1).
 
-semantics_event_(Pred,S,O,Event1) :-
-        !, Event0 =.. [Pred,S|O],
-        Event1 =.. [event,Event0].
-
+semantics_event_(Pred,S,O,Event) :-
+        Event =.. [Pred,S|O].
